@@ -13,12 +13,16 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Navigate, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 export default function Login() {
     const navigate = useNavigate();
 
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
     async function handleLogin(){
-        console.log("test");
+        console.log(email, password);
         //TODO: login logic
 
     }
@@ -40,6 +44,7 @@ export default function Login() {
                                         type="email"
                                         placeholder="e@example.com"
                                         required
+                                        onChange={(e) => {setEmail(e.target.value)}}
                                     />
                                 </div>
                                 <div className="grid gap-2">
@@ -52,7 +57,7 @@ export default function Login() {
                                             Forgot your password?
                                         </a>
                                     </div>
-                                    <Input type="password" required placeholder="Enter Password"/>
+                                    <Input type="password" required placeholder="Enter Password" onChange={(e) => {setPassword(e.target.value)}}/>
                                 </div>
                             </div>
                         </form>
