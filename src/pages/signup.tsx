@@ -29,7 +29,7 @@ export default function Signup() {
     const [name, setName] = useState("");
 
     async function handleSignup() {
-        console.log(email, password, role);
+        console.log(email, password, role, name);
         //TODO: login logic
 
     }
