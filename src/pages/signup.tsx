@@ -37,8 +37,8 @@ export default function Signup() {
     return (
         <>
             <Header page="signup"/>
-            <main className="flex min-h-screen items-center justify-center">
-                <Card className="w-full max-w-md mb-30 border border-[var(--header-background)] pt-0">
+            <main className="flex min-h-screen items-center justify-center py-25">
+                <Card className="w-full max-w-md border border-[var(--header-background)] pt-0 mb-30">
                     <CardHeader className="bg-[var(--header-background)] rounded-t-md py-2">
                         <CardTitle className="text-3xl font-bold text-center text-white">Signup</CardTitle>
                     </CardHeader>
@@ -48,6 +48,8 @@ export default function Signup() {
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Name</Label>
                                     <Input
+                                        id="name"
+                                        name="name"
                                         type="text"
                                         placeholder="Enter your name"
                                         required
@@ -57,6 +59,8 @@ export default function Signup() {
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Email</Label>
                                     <Input
+                                        id="email"
+                                        name="email"
                                         type="email"
                                         placeholder="e@example.com"
                                         required
@@ -65,7 +69,10 @@ export default function Signup() {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="password">Password</Label>
-                                    <Input type="password" required placeholder="Enter Password" onChange={(e) => { setPassword(e.target.value) }} />
+                                    <Input
+                                        id="password"
+                                        name="password"
+                                        type="password" required placeholder="Enter Password" onChange={(e) => { setPassword(e.target.value) }} />
                                 </div>
                                 {/* TODO: get user to enter address or ask for location permissions? */}
                                 <div className="grid gap-2">
