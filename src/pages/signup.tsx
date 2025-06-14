@@ -46,11 +46,11 @@ export default function Signup() {
 
     return (
         <>
-            <main className="flex min-h-screen items-center justify-center flex-col gap-12 w-full py-25">
+            <main className="flex min-h-screen items-center justify-center flex-col gap-10 w-full py-25">
                 <IoCartOutline className="text-sm scale-700" />
                 <h1 className="text-5xl font-normal">Cart Cloud</h1>
                 <form className="w-1/4 ">
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="email">Name</Label>
                             <Input
