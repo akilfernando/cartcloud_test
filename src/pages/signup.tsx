@@ -48,8 +48,8 @@ export default function Signup() {
         <>
             <main className="flex h-screen items-center justify-center flex-col gap-1 w-full px-2 pt-4 pb-2">
                 <IoCartOutline className="text-lg scale-300 2xl:scale-700 mb-1" />
-                <h1 className="text-base sm:text-xl font-normal mt-4">Cart Cloud</h1>
-                <form className="w-full max-w-xs">
+                <h1 className="text-4xl 2xl:text-5xl font-normal mt-4">Cart Cloud</h1>
+                <form className="w-full max-w-md">
                     <div className="flex flex-col gap-2 sm:gap-3">
                         <div className="grid gap-1">
                             <Label htmlFor="email">Name</Label>
