@@ -1,6 +1,5 @@
 import Header from "@/components/header";
-
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardAction,
@@ -9,9 +8,9 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Footer from "@/components/footer";
@@ -26,17 +25,16 @@ export default function Login() {
     async function handleLogin() {
         console.log(email, password);
         //TODO: login logic
-
     }
 
     return (
         <>
-            <main className="flex min-h-screen items-center justify-center flex-col gap-12 w-full py-25">
-                <IoCartOutline className="text-sm scale-700" />
-                <h1 className="text-5xl font-normal">Cart Cloud</h1>
-                <form className="w-1/4 ">
-                    <div className="flex flex-col gap-5">
-                        <div className="grid gap-2">
+            <main className="flex h-screen items-center justify-center flex-col gap-1 w-full px-2 pt-4 pb-2">
+                <IoCartOutline className="text-lg scale-300 2xl:scale-700 mb-1" />
+                <h1 className="text-base sm:text-xl font-normal mt-4">Cart Cloud</h1>
+                <form className="w-full max-w-xs">
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                        <div className="grid gap-1">
                             <Label htmlFor="email">Email</Label>
                             <Input
                                 id="email"
@@ -47,26 +45,27 @@ export default function Login() {
                                 onChange={(e) => { setEmail(e.target.value) }}
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <div className="flex items-center">
-                                <Label htmlFor="password">Password</Label>
-                                <a
-                                    href="#"
-                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                >
-                                    Forgot your password?
-                                </a>
-                            </div>
-                            <Input id="password" name="password" type="password" required placeholder="Enter Password" onChange={(e) => { setPassword(e.target.value) }} />
+                        <div className="grid gap-1">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="Enter Password"
+                                required
+                                onChange={(e) => { setPassword(e.target.value) }}
+                            />
                         </div>
-                        <div className="grid gap-2">
-                            <Button className="bg-[var(--foreground)] text-white hover:bg-[var(--muted-foreground)]" onClick={handleLogin}>
+                        <div className="grid gap-1">
+                            <Button className="w-full bg-[var(--foreground)] text-white hover:bg-[var(--muted-foreground)]" onClick={handleLogin}>
                                 Sign In
                             </Button>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center justify-center text-sm">
                             Don't have an account?
-                            <Button className="ps-2 text-blue-500" variant="link" onClick={() => navigate("/signup")}>Sign Up</Button>
+                            <Button className="ps-1 text-blue-500" variant="link" onClick={() => navigate("/signup")}>
+                                Sign Up
+                            </Button>
                         </div>
                     </div>
                 </form>

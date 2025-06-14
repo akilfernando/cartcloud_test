@@ -46,12 +46,12 @@ export default function Signup() {
 
     return (
         <>
-            <main className="flex min-h-screen items-center justify-center flex-col gap-10 w-full py-25">
-                <IoCartOutline className="text-sm scale-700" />
-                <h1 className="text-5xl font-normal">Cart Cloud</h1>
-                <form className="w-1/4 ">
-                    <div className="flex flex-col gap-4">
-                        <div className="grid gap-2">
+            <main className="flex h-screen items-center justify-center flex-col gap-1 w-full px-2 pt-4 pb-2">
+                <IoCartOutline className="text-lg scale-300 2xl:scale-700 mb-1" />
+                <h1 className="text-base sm:text-xl font-normal mt-4">Cart Cloud</h1>
+                <form className="w-full max-w-xs">
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                        <div className="grid gap-1">
                             <Label htmlFor="email">Name</Label>
                             <Input
                                 id="name"
@@ -62,7 +62,7 @@ export default function Signup() {
                                 onChange={(e) => { setName(e.target.value) }}
                             />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                             <Label htmlFor="email">Email</Label>
                             <Input
                                 id="email"
@@ -73,22 +73,29 @@ export default function Signup() {
                                 onChange={(e) => { setEmail(e.target.value) }}
                             />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                             <Label htmlFor="password">Password</Label>
                             <Input
                                 id="password"
                                 name="password"
-                                type="password" required placeholder="Enter Password" onChange={(e) => { setPassword(e.target.value) }} />
+                                type="password"
+                                placeholder="Enter Password"
+                                required
+                                onChange={(e) => { setPassword(e.target.value) }}
+                            />
                         </div>
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                             <Label htmlFor="password">Confirm Password</Label>
                             <Input
                                 id="confirm-password"
                                 name="confirm-password"
-                                type="password" required placeholder="Confirm Password" onChange={(e) => { setConfirmPassword(e.target.value) }} />
+                                type="password"
+                                placeholder="Confirm Password"
+                                required
+                                onChange={(e) => { setConfirmPassword(e.target.value) }}
+                            />
                         </div>
-                        {/* TODO: get user to enter address or ask for location permissions? */}
-                        <div className="grid gap-2">
+                        <div className="grid gap-1">
                             <Label htmlFor="role">Role</Label>
                             <Select value={role} onValueChange={setRole}>
                                 <SelectTrigger id="role" className="w-full">
@@ -100,14 +107,16 @@ export default function Signup() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid gap-2">
-                            <Button className="w-full  bg-[var(--foreground)] text-white hover:bg-[var(--muted-foreground)]" onClick={handleSignup}>
+                        <div className="grid gap-1">
+                            <Button className="w-full bg-[var(--foreground)] text-white hover:bg-[var(--muted-foreground)]" onClick={handleSignup}>
                                 Create Account
                             </Button>
                         </div>
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center text-sm">
                             Already have an account?
-                            <Button className="ps-2 text-blue-500" variant="link" onClick={() => navigate("/")}>Login</Button>
+                            <Button className="ps-1 text-blue-500" variant="link" onClick={() => navigate("/")}>
+                                Login
+                            </Button>
                         </div>
                     </div>
                 </form>
