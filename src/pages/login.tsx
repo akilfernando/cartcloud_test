@@ -1,6 +1,5 @@
 import Header from "@/components/header";
-
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardAction,
@@ -9,12 +8,13 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Footer from "@/components/footer";
+import { IoCartOutline } from "react-icons/io5";
 
 export default function Login() {
     const navigate = useNavigate();
@@ -22,58 +22,62 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    async function handleLogin(){
+    async function handleLogin() {
         console.log(email, password);
         //TODO: login logic
-
     }
 
     return (
         <>
-            <Header page="login"/>
-            <main className="flex min-h-screen items-center justify-center py-25">
-                <Card className="w-full max-w-md mb-30 border border-[var(--header-background)] pt-0">
-                    <CardHeader className="bg-[var(--header-background)] rounded-t-md py-2">
-                        <CardTitle className="text-3xl font-bold text-center text-white">Login</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form>
-                            <div className="flex flex-col gap-6">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        placeholder="e@example.com"
-                                        required
-                                        onChange={(e) => {setEmail(e.target.value)}}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <div className="flex items-center">
-                                        <Label htmlFor="password">Password</Label>
-                                        <a
-                                            href="#"
-                                            className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                                        >
-                                            Forgot your password?
-                                        </a>
-                                    </div>
-                                    <Input id="password" name="password" type="password" required placeholder="Enter Password" onChange={(e) => {setPassword(e.target.value)}}/>
-                                </div>
+            <main className="flex h-screen items-center justify-center flex-col gap-1 w-full px-2 pt-4 pb-2">
+                <IoCartOutline className="text-lg scale-300 2xl:scale-600 mb-3 2xl:mb-5" />
+                <h1 className="text-4xl 2xl:text-5xl font-normal mt-3 2xl:mt-5">Cart Cloud</h1>
+                <form className="w-full max-w-md">
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                        <div className="grid gap-1">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="e@example.com"
+                                required
+                                onChange={(e) => { setEmail(e.target.value) }}
+                            />
+                        </div>
+                        <div className="grid gap-1">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Password</Label>
+                                <a
+                                    href="#"
+                                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                                >
+                                    Forgot your password?
+                                </a>
                             </div>
-                        </form>
-                    </CardContent>
-                    <CardFooter className="flex-col gap-2">
-                        <Button className="w-full  bg-[var(--header-background)] text-white hover:bg-[var(--header-background)]/90" onClick={handleLogin}>
-                            Login
-                        </Button>
-                        <CardAction className="text-sm">Don't have an account?<Button className="ps-2" variant="link" onClick={() => navigate("/signup")}>Sign Up</Button></CardAction>
-                    </CardFooter>
-                </Card>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="Enter Password"
+                                required
+                                onChange={(e) => { setPassword(e.target.value) }}
+                            />
+                        </div>
+                        <div className="grid gap-1">
+                            <Button className="w-full bg-[var(--foreground)] text-white hover:bg-[var(--muted-foreground)]" onClick={handleLogin}>
+                                Sign In
+                            </Button>
+                        </div>
+                        <div className="flex items-center justify-center text-sm">
+                            Don't have an account?
+                            <Button className="ps-1 text-blue-500" variant="link" onClick={() => navigate("/signup")}>
+                                Sign Up
+                            </Button>
+                        </div>
+                    </div>
+                </form>
             </main>
-            <Footer />
         </>
     )
 }
