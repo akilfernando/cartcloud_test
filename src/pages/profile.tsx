@@ -188,11 +188,10 @@ export default function Profile() {
     return (
         <div className="flex flex-col min-h-screen">
             <Header page="profile" />
-
-            <main className="flex-grow flex items-center justify-center flex-col gap-4 w-full px-2 py-12">
-                 <IoPersonOutline className="text-lg scale-300 2xl:scale-600 mb-3 2xl:mb-5" />
-                 <h1 className="text-4xl 2xl:text-5xl font-normal mb-3 2xl:mt-5">User Profile</h1>
-                <Card className="w-full max-w-md">
+            <main className="flex-grow flex items-center justify-center flex-col gap-4 w-full px-2 pt-32 pb-6 overflow-y-auto">
+                 <IoPersonOutline className="text-lg scale-100 xl:scale-300 mb-3 xl:mb-3 mt-2" />
+                 <h1 className="text-xl md:text-2xl font-medium mb-0.5">User Profile</h1>
+                    <Card className="w-full max-w-md mt-0.5">
                     <CardHeader>
                         <CardTitle>Profile Information</CardTitle>
                         <CardDescription>View and update your profile details.</CardDescription>
