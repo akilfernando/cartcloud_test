@@ -43,7 +43,7 @@ export default function Header({ page }: HeaderProps) {
                                 <NavigationMenuLink href="#" className="hover:text-gray-900">Shop</NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="#" className="hover:text-gray-900">About</NavigationMenuLink>
+                                <NavigationMenuLink href="/about" className="hover:text-gray-900">About</NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
                                 <NavigationMenuLink href="#" className="hover:text-gray-900">Contact</NavigationMenuLink>
