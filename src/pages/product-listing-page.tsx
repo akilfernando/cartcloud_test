@@ -1,5 +1,6 @@
 import React from 'react';
 import Header from '../components/header'
+import Footer from '@/components/footer';
 
 // Interface for a single product
 interface Product {
@@ -49,8 +50,8 @@ const ProductListingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header page="products" /> {/* Pass a 'page' prop for conditional header rendering */}
-      <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16"> {/* Added mt-16 for spacing below fixed header */}
+      <Header page="products" /> 
+      <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Products</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
@@ -58,8 +59,7 @@ const ProductListingPage: React.FC = () => {
           ))}
         </div>
       </main>
-      {/* Assuming a Footer component exists and would be rendered here */}
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 };
