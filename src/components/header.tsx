@@ -7,10 +7,12 @@ import {
 
 interface HeaderProps {
     page: string;
+    role: string;
 }
 
-export default function Header({ page }: HeaderProps) {
+export default function Header({ page, role }: HeaderProps) {
     const isAuthPage = page === "login" || page === "signup";
+    
 
     return (
         <header className="w-full py-4 fixed top-0 bg-white text-gray-800 shadow-sm flex items-center justify-between z-50 px-6 md:px-12 rounded-b-lg">
@@ -54,7 +56,7 @@ export default function Header({ page }: HeaderProps) {
             )}
 
             <div className="flex items-center space-x-6">
-                {!isAuthPage && (
+                {!isAuthPage && role==="customer"&&(
                     <>
                         {/* Search Icon */}
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -67,6 +69,18 @@ export default function Header({ page }: HeaderProps) {
                         {/* Shopping Bag Icon */}
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </>
+                )}
+                {!isAuthPage && role==="vendor"&&(
+                    <>
+                        {/* Search Icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {/* Upload Icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
                         </svg>
                     </>
                 )}
