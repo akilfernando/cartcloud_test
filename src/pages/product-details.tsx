@@ -108,10 +108,10 @@ const ProductDetails: React.FC = () => {
   const closeModal = () => {
     setModalMessage('');
   };
-
+//TODO Check user's role and use that for the role so that the appropriate header is displayed.
   return (
     <>
-      <Header page="product-details" />
+      <Header page="product-details" role="customer"/>
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16">
         <div className="bg-white rounded-lg shadow-md overflow-hidden p-4 md:p-8 flex flex-col lg:flex-row gap-4 lg:gap-8">
           <div className="flex flex-col lg:flex-row gap-4 w-full lg:w-2/5">
