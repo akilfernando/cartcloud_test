@@ -10,7 +10,9 @@ import {
     LineElement,
     PointElement,
     Tooltip,
-    Legend
+    Legend,
+    type ChartData,
+    type ChartOptions
 } from 'chart.js';
 
 import { Chart } from 'react-chartjs-2';
