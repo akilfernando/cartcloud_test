@@ -4,6 +4,7 @@ import Login from "./pages/login";
 import Signup from './pages/signup';
 import ProductDetails from './pages/product-details';
 import ProductListingPage from './pages/product-listing-page';
+import SearchPage from './pages/search';
 import VendorHomePage from './pages/vendor-home';
 import Contact from './pages/contact';
 import Profile from './pages/profile';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/signup" element={<Signup/>}/>
         <Route path="/product-details" element={<ProductDetails/>} />
         <Route path="/product-listing" element={<ProductListingPage/>} />
+        <Route path="/search" element={<SearchPage/>} />
         <Route path="/vendor-home" element={<VendorHomePage/>} />
         <Route path="/contact" element={<Contact/>} />
         <Route path="/about" element={<About/>} />
