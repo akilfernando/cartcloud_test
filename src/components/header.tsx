@@ -40,16 +40,44 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                     <NavigationMenu>
                         <NavigationMenuList className="space-x-8 text-gray-600 font-medium">
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="#" className="hover:text-gray-900">Home</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/home" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "home" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Home
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="#" className="hover:text-gray-900">Shop</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/product-listing" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "products" || page === "product-listing" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Shop
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="/about" className="hover:text-gray-900">About</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/about" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "about" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    About
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="/contact" className="hover:text-gray-900">Contact</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/contact" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "contact" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Contact
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                         </NavigationMenuList>
                     </NavigationMenu>
@@ -61,18 +89,46 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                     <>
                         {/* Search Icon */}
                         <Link to="/search" aria-label="Search">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            {page === "search" ? (
+                                // Filled search icon when on search page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                // Outlined search icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
                         </Link>
-                     {/* Heart/Wishlist Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
+                     {/* Heart/Wishlist Icon linking to wishlist */}
+                        <Link to="/wishlist" aria-label="Wishlist">
+                            {page === "wishlist" ? (
+                                // Filled heart icon when on wishlist page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            ) : (
+                                // Outlined heart icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            )}
+                        </Link>
                         {/* Shopping Bag Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                        </svg>
+                        <Link to="/cart" aria-label="Cart">
+                            {page === "cart" ? (
+                                // Filled cart icon when on cart page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                // Outlined cart icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            )}
+                        </Link>
                     </>
                 )}
                 {!isAuthPage && role==="vendor"&&(
