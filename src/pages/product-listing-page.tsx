@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '../components/header'
 import Footer from '@/components/footer';
+import { useAuth } from '@/context/authContext';
 
 // Interface for a single product
 interface Product {
@@ -47,10 +48,10 @@ const ProductListingPage: React.FC = () => {
     { id: '7', name: 'Basic Utensils', category: 'Kitchen', price: 19.99, imageUrl: 'https://placehold.co/200x200/C0C0C0/333333?text=Basic+Utensils' },
     { id: '8', name: 'Tv Remote', category: 'Electronics', price: 19.99, imageUrl: 'https://placehold.co/200x200/B0B0B0/333333?text=Tv+Remote' },
   ];
-
+  
   return (
     <div className="min-h-screen flex flex-col">
-      <Header page="products" /> 
+      <Header page="products" />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Products</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

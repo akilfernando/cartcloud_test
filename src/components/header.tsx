@@ -4,7 +4,9 @@ import {
     NavigationMenuLink,
     NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/authContext";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
     page: string;
@@ -13,6 +15,8 @@ interface HeaderProps {
 
 export default function Header({ page, role = "customer" }: HeaderProps) {
     const isAuthPage = page === "login" || page === "signup";
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
     
 
     return (
@@ -87,7 +91,17 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                         </svg>
                     </>
                 )}
-
+                {user && !isAuthPage && (
+                    <Button
+                        className="text-white px-4 py-2 rounded hover:bg-red-600"
+                        onClick={() => {
+                            logout();
+                            navigate("/");
+                        }}
+                    >
+                        Logout
+                    </Button>
+                )}
                 <NavigationMenu className="pe-4">
                     <NavigationMenuList>
                         <NavigationMenuItem>
