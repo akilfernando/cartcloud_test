@@ -3,6 +3,7 @@ import Header from '../components/header'
 import Footer from '@/components/footer';
 import ProductCard from '@/components/product-card';
 import axios from 'axios';
+import { useAuth } from '@/context/authContext';
 
 // Interface for a single product
 interface Product {
@@ -38,7 +39,7 @@ const ProductListingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header page="products" /> 
+      <Header page="products" />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Products</h1>
         {loading ? (
