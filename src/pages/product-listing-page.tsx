@@ -24,7 +24,11 @@ const ProductListingPage: React.FC = () => {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const { data } = await axios.get<Product[]>(`${API_URL}/products`);
+        const { data } = await axios.get<Product[]>(`${API_URL}/products`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         setProducts(data);
       } catch (err) {
         console.error(err);
