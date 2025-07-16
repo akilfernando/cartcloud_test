@@ -147,30 +147,52 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                         </svg>
                     </>
                 )}
-                {user && !isAuthPage && (
-                    <Button
-                        className="text-white px-4 py-2 rounded hover:bg-red-600"
-                        onClick={() => {
-                            logout();
-                            navigate("/");
-                        }}
-                    >
-                        Logout
-                    </Button>
+                {!isAuthPage && role==="vendor"&&(
+                    <>
+                        {/* Search Icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {/* Upload Icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
+                        </svg>
+                    </>
                 )}
-                <NavigationMenu className="pe-4">
-                    <NavigationMenuList>
-                        <NavigationMenuItem>
-                            <NavigationMenuLink href={page === "login" ? "/signup" : "/"} className="text-xl font-semibold px-4 py-2 flex items-center justify-center text-gray-600 hover:text-gray-900">
-                                {/* Account Icon */}
-                                <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {page === "login" ? <p>Signup</p> : <p>Login</p>}
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
+                {user && !isAuthPage && (
+                    <div className="flex items-center gap-2">
+                        <Link to="/profile" className="text-gray-600 hover:text-gray-900">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </Link>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                logout();
+                                navigate("/");
+                            }}
+                        >
+                            Logout
+                        </Button>
+                    </div>
+                )}
+                {!user && (
+                    <NavigationMenu className="pe-4">
+                        <NavigationMenuList>
+                            <NavigationMenuItem>
+                                <NavigationMenuLink href={page === "login" ? "/signup" : "/login"} className="text-xl font-semibold px-4 py-2 flex items-center justify-center text-gray-600 hover:text-gray-900">
+                                    {/* Account Icon */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {page === "login" ? <p>Signup</p> : <p>Login</p>}
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                )}
             </div>
         </header>
     );
