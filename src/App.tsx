@@ -10,6 +10,7 @@ import Contact from './pages/contact';
 import Profile from './pages/profile';
 import About from './pages/about';
 import Wishlist from './pages/wishlist';
+import UploadProductPage from './pages/upload-product';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/about" element={<About/>} />
         <Route path="/profile" element={<Profile/>} />
         <Route path="/wishlist" element={<Wishlist/>} />
+        <Route path='/upload-product' element={<UploadProductPage/>} />
       </Routes>
     </BrowserRouter>
   )
