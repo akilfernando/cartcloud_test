@@ -4,8 +4,9 @@ import {
     NavigationMenuLink,
     NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/authContext";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
     page: string;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export default function Header({ page, role = "customer" }: HeaderProps) {
     const isAuthPage = page === "login" || page === "signup";
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
     
 
@@ -42,16 +44,44 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                     <NavigationMenu>
                         <NavigationMenuList className="space-x-8 text-gray-600 font-medium">
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="#" className="hover:text-gray-900">Home</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/home" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "home" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Home
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="#" className="hover:text-gray-900">Shop</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/product-listing" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "products" || page === "product-listing" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Shop
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="/about" className="hover:text-gray-900">About</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/about" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "about" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    About
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink href="/contact" className="hover:text-gray-900">Contact</NavigationMenuLink>
+                                <NavigationMenuLink 
+                                    href="/contact" 
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "contact" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Contact
+                                </NavigationMenuLink>
                             </NavigationMenuItem>
                         </NavigationMenuList>
                     </NavigationMenu>
@@ -63,17 +93,57 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                     <>
                         {/* Search Icon */}
                         <Link to="/search" aria-label="Search">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            {page === "search" ? (
+                                // Filled search icon when on search page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                // Outlined search icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
                         </Link>
-                     {/* Heart/Wishlist Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
+                     {/* Heart/Wishlist Icon linking to wishlist */}
+                        <Link to="/wishlist" aria-label="Wishlist">
+                            {page === "wishlist" ? (
+                                // Filled heart icon when on wishlist page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            ) : (
+                                // Outlined heart icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            )}
+                        </Link>
                         {/* Shopping Bag Icon */}
+                        <Link to="/cart" aria-label="Cart">
+                            {page === "cart" ? (
+                                // Filled cart icon when on cart page
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                  <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                // Outlined cart icon for other pages
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                            )}
+                        </Link>
+                    </>
+                )}
+                {!isAuthPage && role==="vendor"&&(
+                    <>
+                        {/* Search Icon */}
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {/* Upload Icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
                         </svg>
                     </>
                 )}
@@ -84,25 +154,45 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         {/* Upload Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" onClick={() => navigate("/upload-product")}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
                         </svg>
                     </>
                 )}
-
-                <NavigationMenu className="pe-4">
-                    <NavigationMenuList>
-                        <NavigationMenuItem>
-                            <NavigationMenuLink href={page === "login" ? "/signup" : "/"} className="text-xl font-semibold px-4 py-2 flex items-center justify-center text-gray-600 hover:text-gray-900">
-                                {/* Account Icon */}
-                                <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {page === "login" ? <p>Signup</p> : <p>Login</p>}
-                            </NavigationMenuLink>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
+                {user && !isAuthPage && (
+                    <div className="flex items-center gap-2">
+                        <Link to="/profile" className="text-gray-600 hover:text-gray-900">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </Link>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                logout();
+                                navigate("/");
+                            }}
+                        >
+                            Logout
+                        </Button>
+                    </div>
+                )}
+                {!user && (
+                    <NavigationMenu className="pe-4">
+                        <NavigationMenuList>
+                            <NavigationMenuItem>
+                                <NavigationMenuLink href={page === "login" ? "/signup" : "/login"} className="text-xl font-semibold px-4 py-2 flex items-center justify-center text-gray-600 hover:text-gray-900">
+                                    {/* Account Icon */}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="inline-block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    {page === "login" ? <p>Signup</p> : <p>Login</p>}
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                )}
             </div>
         </header>
     );

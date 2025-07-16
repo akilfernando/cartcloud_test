@@ -1,41 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import axios from 'axios';
+import { HeartIcon } from 'lucide-react';
+import { useParams, useLocation } from 'react-router-dom';
 
 // Defines the structure of product data.
 interface Product {
-  id: string;
+  _id: string;
   name: string;
   price: number;
-  currency: string;
-  images: string[];
-  variants: { label: string; value: string }[];
-  description: {
-    info: string;
-    details: string;
-    delivery: string;
+  currency?: string;
+  imageUrl?: string;
+  images?: string[];
+  category?: string;
+  variants?: { label: string; value: string }[];
+  description?: {
+    info?: string;
+    details?: string;
+    delivery?: string;
   };
-  attributes: {
-    material: string;
-    fit: string;
-    neckline: string;
-    care: string;
-    fabricWeight?: string;
-    stitching?: string;
-    sleeveStyle?: string;
-    origin?: string;
-    standardDelivery?: string;
-    expressDelivery?: string;
-    returnsPolicy?: string;
-    returnCondition?: string;
+  attributes?: {
+    [key: string]: any;
   };
 }
 
 // Hardcoded product data; this will be replaced by a backend API call.
-const productData: Product = {
-  id: 'basic-t-shirt-123',
+const fallbackProduct: Product = {
+  _id: 'basic-t-shirt-123',
   name: 'Basic T-Shirt',
   price: 10,
   currency: '$',
@@ -82,7 +76,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ message, onClose }) => {
   if (!message) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center rounded-lg">
         <p className="text-lg font-semibold text-gray-800 mb-4">{message}</p>
         <Button onClick={onClose} variant="secondary">Close</Button>
@@ -92,23 +86,139 @@ const MessageModal: React.FC<MessageModalProps> = ({ message, onClose }) => {
 };
 
 const ProductDetails: React.FC = () => {
-  const [selectedVariant, setSelectedVariant] = useState(productData.variants[0]?.value || '');
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+
+  // Product either passed through navigation state or will be fetched
+  const [product, setProduct] = useState<Product | undefined>(
+    (location.state as any)?.product as Product | undefined
+  );
+  const [loading, setLoading] = useState<boolean>(!product);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedVariant, setSelectedVariant] = useState<string>('');
+  const [mainImage, setMainImage] = useState<string>('');
   const [activeTab, setActiveTab] = useState('info');
   const [modalMessage, setModalMessage] = useState('');
-  const [mainImage, setMainImage] = useState(productData.images[0]);
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  // Backend base URL (fallback to localhost if env not set)
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+  // Temporary: use stored userId or a hard-coded fallback
+  const userId = localStorage.getItem('userId') || '68372ccebb5188f5a3c44def';
+
+  // Use either fetched product or fallback demo product
+  const productData: Product = (product ?? fallbackProduct);
+
+  // Fetch product if needed
+  useEffect(() => {
+    if (product) {
+      const firstImage = product.images?.[0] || product.imageUrl || '';
+      setMainImage(firstImage);
+      return;
+    }
+
+    if (!id) return;
+    const fetchProduct = async () => {
+      try {
+        const { data } = await axios.get<Product>(`${API_URL}/products/${id}`);
+        setProduct(data);
+        setSelectedVariant(data.variants?.[0]?.value ?? '');
+        const firstImage = data.images?.[0] || data.imageUrl || '';
+        setMainImage(firstImage);
+      } catch (err) {
+        console.error(err);
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id, product]);
+
+  // Fetch wishlist to determine if this product is already favorited
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (!productData?._id) return;
+      try {
+        const { data } = await axios.get(`${API_URL}/wishlists/${userId}`);
+        const exists = (data.items || []).some((item: any) => {
+          const pid = item.productId?._id ?? item.productId;
+          return pid === productData._id;
+        });
+        setIsFavorite(exists);
+      } catch (err) {
+        console.error('Failed to check wishlist', err);
+      }
+    };
+
+    checkWishlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productData._id]);
+
+  // Toggle wishlist status
+  const handleToggleWishlist = async () => {
+    if (isFavorite) {
+      // Remove from wishlist
+      try {
+        await axios.delete(`${API_URL}/wishlists/${userId}/${productData._id}`);
+        setIsFavorite(false);
+        setModalMessage(`${productData.name} has been removed from your wishlist.`);
+      } catch (err) {
+        console.error(err);
+        setModalMessage('Failed to remove from wishlist.');
+      }
+    } else {
+      // Add to wishlist
+      try {
+        await axios.post(`${API_URL}/wishlists/${userId}`, { productId: productData._id });
+        setIsFavorite(true);
+        setModalMessage(`${productData.name} has been added to your wishlist!`);
+      } catch (err) {
+        console.error(err);
+        setModalMessage('Failed to add to wishlist.');
+      }
+    }
+  };
 
   const handleVariantChange = (value: string) => {
     setSelectedVariant(value);
   };
 
   const handleAddToCart = () => {
-    setModalMessage(`Added ${productData.name} (${selectedVariant}) to cart!`);
+    setModalMessage(`Added ${productData.name} to cart!`);
   };
 
   const closeModal = () => {
     setModalMessage('');
   };
-//TODO Check user's role and use that for the role so that the appropriate header is displayed.
+
+  if (loading) {
+    return (
+      <>
+        <Header page="product-details" />
+        <main className="flex-grow flex items-center justify-center mt-20">
+          <p>Loading product...</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Header page="product-details" />
+        <main className="flex-grow flex items-center justify-center mt-20">
+          <p className="text-red-600">{error}</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Header page="product-details" role="customer"/>
@@ -116,7 +226,7 @@ const ProductDetails: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md overflow-hidden p-4 md:p-8 flex flex-col lg:flex-row gap-4 lg:gap-8">
           <div className="flex flex-col lg:flex-row gap-4 w-full lg:w-2/5">
             <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 justify-center flex-shrink-0 lg:w-24 lg:h-auto">
-              {productData.images.map((img, index) => (
+              {productData.images?.map((img, index) => (
                 <div
                   key={index}
                   className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-md border border-gray-200 overflow-hidden cursor-pointer hover:border-gray-400 transition-colors duration-200"
@@ -133,7 +243,7 @@ const ProductDetails: React.FC = () => {
 
           <div className="w-full lg:w-3/5 space-y-6 mt-6 lg:mt-0">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{productData.name}</h1>
-            <p className="text-2xl text-gray-700 font-semibold">{productData.currency}{productData.price}</p>
+            <p className="text-2xl text-gray-700 font-semibold">{productData.currency ?? '$'}{productData.price}</p>
 
             <div className="space-y-2">
               <label htmlFor="product-variant" className="block text-gray-700 text-sm font-medium mb-1">Select Size:</label>
@@ -142,7 +252,7 @@ const ProductDetails: React.FC = () => {
                 onValueChange={handleVariantChange}
                 className="grid grid-cols-3 sm:grid-cols-5 gap-2"
               >
-                {productData.variants.map((option) => (
+                {(productData.variants ?? []).map((option) => (
                   <div key={option.value} className="flex items-center space-x-2">
                     <RadioGroupItem value={option.value} id={`variant-${option.value}`} />
                     <label htmlFor={`variant-${option.value}`} className="text-sm font-medium leading-none cursor-pointer">
@@ -153,9 +263,21 @@ const ProductDetails: React.FC = () => {
               </RadioGroup>
             </div>
 
-            <Button onClick={handleAddToCart} className="w-full md:w-auto mt-4">
-              Add to cart
-            </Button>
+            <div className="flex items-center gap-3 mt-4">
+              <Button onClick={handleAddToCart} className="w-full md:w-auto">
+                Add to cart
+              </Button>
+              <button
+                onClick={handleToggleWishlist}
+                className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors"
+                aria-label="Add to wishlist"
+              >
+                <HeartIcon
+                  className={isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600'}
+                  size={22}
+                />
+              </button>
+            </div>
 
             <div className="border-t border-gray-200 pt-6 mt-6">
               <div className="flex space-x-4 border-b border-gray-200 mb-4 overflow-x-auto whitespace-nowrap">
@@ -181,34 +303,34 @@ const ProductDetails: React.FC = () => {
 
               {activeTab === 'info' && (
                 <div className="text-gray-600 text-sm leading-relaxed p-2">
-                  <p>{productData.description.info}</p>
+                  <p>{productData.description?.info}</p>
                   <ul className="list-disc list-inside mt-4 space-y-1">
-                    <li>Material: {productData.attributes.material}</li>
-                    <li>Fit: {productData.attributes.fit}</li>
-                    <li>Neckline: {productData.attributes.neckline}</li>
-                    <li>Care: {productData.attributes.care}</li>
+                    <li>Material: {productData.attributes?.material}</li>
+                    <li>Fit: {productData.attributes?.fit}</li>
+                    <li>Neckline: {productData.attributes?.neckline}</li>
+                    <li>Care: {productData.attributes?.care}</li>
                   </ul>
                 </div>
               )}
               {activeTab === 'details' && (
                 <div className="text-gray-600 text-sm leading-relaxed p-2">
-                  <p>{productData.description.details}</p>
+                  <p>{productData.description?.details}</p>
                   <ul className="list-disc list-inside mt-4 space-y-1">
-                    <li>Fabric Weight: {productData.attributes.fabricWeight}</li>
-                    <li>Stitching: {productData.attributes.stitching}</li>
-                    <li>Sleeve Style: {productData.attributes.sleeveStyle}</li>
-                    <li>Origin: {productData.attributes.origin}</li>
+                    <li>Fabric Weight: {productData.attributes?.fabricWeight}</li>
+                    <li>Stitching: {productData.attributes?.stitching}</li>
+                    <li>Sleeve Style: {productData.attributes?.sleeveStyle}</li>
+                    <li>Origin: {productData.attributes?.origin}</li>
                   </ul>
                 </div>
               )}
               {activeTab === 'delivery' && (
                 <div className="text-gray-600 text-sm leading-relaxed p-2">
-                  <p>{productData.description.delivery}</p>
+                  <p>{productData.description?.delivery}</p>
                   <ul className="list-disc list-inside mt-4 space-y-1">
-                    <li>Standard Delivery: {productData.attributes.standardDelivery}</li>
-                    <li>Express Delivery: {productData.attributes.expressDelivery}</li>
-                    <li>{productData.attributes.returnsPolicy}</li>
-                    <li>{productData.attributes.returnCondition}</li>
+                    <li>Standard Delivery: {productData.attributes?.standardDelivery}</li>
+                    <li>Express Delivery: {productData.attributes?.expressDelivery}</li>
+                    <li>Returns: {productData.attributes?.returnsPolicy}</li>
+                    <li>Return Condition: {productData.attributes?.returnCondition}</li>
                   </ul>
                 </div>
               )}
