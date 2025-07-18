@@ -13,7 +13,7 @@ import { useState } from "react";
 
 export default function Login() {
     const navigate = useNavigate();
-    const { user, login } = useAuth();
+    const { user, isLoading, login } = useAuth();
     const [error, setError] = useState<string | null>("");
 
     const validationSchema = Yup.object({
@@ -25,10 +25,11 @@ export default function Login() {
     });
 
     useEffect(() => {
-        if (user && localStorage.getItem("token")) {
-            navigate("/product-listing");
+        // Redirect authenticated users away from login page
+        if (!isLoading && user) {
+            navigate("/");
         }
-    }, [user, navigate]);
+    }, [user, isLoading, navigate]);
 
     const formik = useFormik({
         initialValues: {
@@ -43,11 +44,20 @@ export default function Login() {
         const { email, password } = values;
         try {
             await login(email, password);
-            navigate("/product-listing");
+            navigate("/");
         } catch (error : any) {
             console.log(error.message);
             setError(error.message);
         }
+    }
+
+    // Show loading spinner while checking authentication
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        );
     }
 
     return (

@@ -6,6 +6,7 @@ import ProductCard from "@/components/product-card";
 import axios from "axios";
 import { HeartIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/authContext";
 
 interface WishlistItem {
   _id: string;
@@ -22,15 +23,22 @@ const Wishlist: React.FC = () => {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  
-  const userId = localStorage.getItem("userId") || "68372ccebb5188f5a3c44def";
-
-  
   useEffect(() => {
     const fetchWishlist = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const { data } = await axios.get<{ items: any[] }>(`${API_URL}/wishlists/${userId}`);
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get<{ items: any[] }>(`${API_URL}/wishlists/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const mapped = (data.items || []).map((entry) => {
           const product = entry.productId ?? {}; 
@@ -55,17 +63,43 @@ const Wishlist: React.FC = () => {
     };
 
     fetchWishlist();
-  }, []);
+  }, [user]);
 
   const handleRemove = async (id: string) => {
+    if (!user) return;
+    
     try {
-      await axios.delete(`${API_URL}/wishlists/${userId}/${id}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/wishlists/${user.id}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error(err);
       alert("Failed to remove item from wishlist.");
     }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header page="wishlist" role="customer" />
+        <main className="flex-grow container mx-auto px-4 py-8 md:py-12 mt-16">
+          <div className="flex flex-col items-center justify-center w-full py-20">
+            <HeartIcon size={60} className="text-gray-300 mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">Please log in to view your wishlist</h2>
+            <p className="text-gray-500 mb-6 text-center max-w-xs">You need to be logged in to access your wishlist.</p>
+            <Link to="/">
+              <Button>Log In</Button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -81,7 +115,7 @@ const Wishlist: React.FC = () => {
             <HeartIcon size={60} className="text-gray-300 mb-4" />
             <h2 className="text-2xl font-semibold text-gray-700 mb-2">Your wishlist is empty</h2>
             <p className="text-gray-500 mb-6 text-center max-w-xs">Browse our catalog and tap the heart icon on products you love to save them here.</p>
-            <Link to="/product-listing">
+            <Link to="/products">
               <Button>Shop Now</Button>
             </Link>
           </div>
