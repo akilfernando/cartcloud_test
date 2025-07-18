@@ -18,6 +18,7 @@ import Checkout from './pages/checkout';
 import Payment from './pages/payment';
 import OrderDetails from './pages/order-details';
 import NotFound from './pages/not-found';
+import UploadProductPage from './pages/upload-product';
 
 function App() {
   return (
@@ -92,8 +93,16 @@ function App() {
                 <OrderDetails/>
               </ProtectedRoute>
             } />
+            <Route path='/upload-product' element={
+              <ProtectedRoute>
+              <UploadProductPage/> 
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<NotFound/>} />
-          </Routes>
+
+           
+      </Routes>
         </BrowserRouter>
       </CartProvider>
     </AuthProvider>
