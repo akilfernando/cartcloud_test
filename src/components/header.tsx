@@ -5,7 +5,7 @@ import { useCart } from "@/context/cartContext";
 import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
-    page: "login" | "signup" | "home" | "shop" | "products" | "product-details" | "search" | "vendor-home" | "contact" | "about" | "profile" | "cart" | "checkout" | "wishlist";
+    page: "login" | "signup" | "home" | "shop" | "products" | "product-details" | "search" | "vendor-home" | "contact" | "about" | "profile" | "cart" | "checkout" | "wishlist" | "upload-product";
     role?: "customer" | "vendor" | "admin";
 }
 
@@ -33,7 +33,8 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
             "profile": "Profile",
             "cart": "Shopping Cart",
             "checkout": "Checkout",
-            "wishlist": "Wishlist"
+            "wishlist": "Wishlist",
+            "upload-product": "Upload Product"
         };
         return pageNames[currentPage] || currentPage;
     };
