@@ -4,15 +4,8 @@ import Footer from '@/components/footer';
 import ProductCard from '@/components/product-card';
 import axios from 'axios';
 import { useAuth } from '@/context/authContext';
+import type { Product } from '@/types/product';
 
-// Interface for a single product
-interface Product {
-  _id: string;
-  name: string;
-  category: string;
-  price: number;
-  imageUrl: string;
-}
 
 const ProductListingPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
