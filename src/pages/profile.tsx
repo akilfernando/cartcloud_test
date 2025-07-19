@@ -375,13 +375,48 @@ export default function Profile() {
             setLoading(true);
             setError(null);
             const token = localStorage.getItem("token");
-            const response = await axios.put(`${BASE_API_URL}/users/${user._id}`, user, {
+            
+            // Create a clean update payload excluding sensitive fields
+            const updatePayload: any = {
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            };
+
+            // Add address if it exists and has required fields
+            if (user.address) {
+                updatePayload.address = {
+                    street: user.address.street || '',
+                    city: user.address.city || '',
+                    province: user.address.province || '',
+                    postalCode: user.address.postalCode || '',
+                    country: user.address.country || 'Canada'
+                };
+            }
+
+            // Add vendorProfile if user is a vendor and it exists
+            if (user.role === 'vendor' && user.vendorProfile) {
+                updatePayload.vendorProfile = {
+                    storeName: user.vendorProfile.storeName || '',
+                    storeSlug: user.vendorProfile.storeSlug || '',
+                    isActive: user.vendorProfile.isActive !== undefined ? user.vendorProfile.isActive : true
+                };
+            }
+
+            // Add accountBalance if it exists (for customers)
+            if (user.accountBalance) {
+                updatePayload.accountBalance = user.accountBalance;
+            }
+
+            console.log("Update payload:", updatePayload);
+
+            const response = await axios.put(`${BASE_API_URL}/users/${user._id}`, updatePayload, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
             console.log("Response:", response.data);
-            setUser(response.data);
+            setUser(response.data.user || response.data);
             setIsEditing(false);
             console.log("Profile saved successfully:", response.data);
 
@@ -397,8 +432,19 @@ export default function Profile() {
             let errorMessage = "Failed to save profile. Please try again.";
 
             if (axios.isAxiosError(err) && err.response) {
+                console.error("Backend error details:", err.response.data);
                 if (err.response.status === 400) {
-                    errorMessage = err.response.data?.message || "Invalid profile data.";
+                    // Extract more detailed error information
+                    const backendError = err.response.data?.error;
+                    if (backendError && backendError.message) {
+                        errorMessage = backendError.message;
+                    } else if (backendError && typeof backendError === 'object') {
+                        // Handle validation errors
+                        const validationErrors = Object.values(backendError).join(', ');
+                        errorMessage = `Validation error: ${validationErrors}`;
+                    } else {
+                        errorMessage = err.response.data?.message || "Invalid profile data.";
+                    }
                 } else if (err.response.status === 401) {
                     errorMessage = "You are not authorized to update this profile.";
                 } else {
@@ -708,6 +754,15 @@ export default function Profile() {
                                                 <Input
                                                     id="address.postalCode"
                                                     value={user.address?.postalCode || ''}
+                                                    onChange={handleInputChange}
+                                                    disabled={!isEditing}
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="address.country">Country</Label>
+                                                <Input
+                                                    id="address.country"
+                                                    value={user.address?.country || 'Canada'}
                                                     onChange={handleInputChange}
                                                     disabled={!isEditing}
                                                 />

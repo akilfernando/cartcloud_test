@@ -24,6 +24,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, pr
         name: product.name,
         category: product.category,
         price: product.price,
+        stock: product.stock,
         imageUrl: product.imageUrl,
         vendorId: product.vendorId,
       });
@@ -34,6 +35,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, pr
         name: '',
         category: '',
         price: 0,
+        stock: 0,
         imageUrl: '',
         vendorId: '', // Default vendorId if creating (though not the primary use case here)
       });
@@ -47,7 +49,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, pr
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'price' ? parseFloat(value) : value,
+      [name]: name === 'price' || name === 'stock' ? parseFloat(value) : value,
     }));
   };
 
@@ -68,6 +70,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, pr
         name: formData.name || product.name,
         category: formData.category || product.category,
         price: formData.price !== undefined ? formData.price : product.price,
+        stock: formData.stock !== undefined ? formData.stock : product.stock,
         imageUrl: formData.imageUrl || product.imageUrl,
         vendorId: product.vendorId, // vendorId should not change during product edit
       };
