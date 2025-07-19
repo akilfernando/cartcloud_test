@@ -5,6 +5,7 @@ import { useCart } from "@/context/cartContext";
 
 interface HeaderProps {
     page: "login" | "signup" | "home" | "shop" | "products" | "product-details" | "search" | "vendor-home" | "contact" | "about" | "profile" | "cart" | "checkout" | "wishlist" | "upload-product" | "vendor-products";
+    role?: "customer" | "vendor" | "admin";
 }
 
 export default function Header({ page }: HeaderProps) {
@@ -149,6 +150,30 @@ export default function Header({ page }: HeaderProps) {
                                                 }`}
                                             >
                                                 Your Store
+                                            </Link>
+                                        </NavigationMenuItem>
+                                        <NavigationMenuItem>
+                                            <Link
+                                                to="/about"
+                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
+                                                    page === "about"
+                                                        ? "text-gray-900 font-semibold border-gray-800"
+                                                        : "border-transparent hover:border-gray-300"
+                                                }`}
+                                            >
+                                                About
+                                            </Link>
+                                        </NavigationMenuItem>
+                                        <NavigationMenuItem>
+                                            <Link
+                                                to="/contact"
+                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
+                                                    page === "contact"
+                                                        ? "text-gray-900 font-semibold border-gray-800"
+                                                        : "border-transparent hover:border-gray-300"
+                                                }`}
+                                            >
+                                                Contact
                                             </Link>
                                         </NavigationMenuItem>
                                     </NavigationMenuList>

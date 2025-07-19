@@ -31,7 +31,7 @@ export default function Login() {
                 navigate("/vendor-home");
             else
             {
-                navigate("/product-listing");
+                navigate("/home");
             }
         }
     }, [user, isLoading, navigate]);
