@@ -95,7 +95,7 @@ const VendorHomePage = () => {
     const secondPercent = (analytics.pendingSales / total) * 100;
     return (
         <>
-            <Header page="vendor-home" role="vendor" />
+            <Header page="vendor-home"/>
             <main className="flex-grow  container mx-auto px-4 py-8 md:py-12 mt-16">
                 <div className="flex gap-6 justify-center items-center">
                     <div className="w-[70%]  bg-white rounded-lg  overflow-hidden flex flex-col gap-6">

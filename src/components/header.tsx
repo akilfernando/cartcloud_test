@@ -10,14 +10,14 @@ import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
     page: string;
-    role?: string;
 }
 
-export default function Header({ page, role = "customer" }: HeaderProps) {
+export default function Header({ page }: HeaderProps) {
     const isAuthPage = page === "login" || page === "signup";
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    
+
+    const currentUserRole = user?.role || "customer";
 
     return (
         <header className="w-full py-4 fixed top-0 bg-white text-gray-800 shadow-sm flex items-center justify-between z-50 px-6 md:px-12 rounded-b-lg">
@@ -29,7 +29,7 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                                 <span className="inline-flex items-center gap-2 text-2xl font-bold">
                                     {/*Shopping Cart Icon*/}
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 md:h-9 md:w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
                                     Cart Cloud
                                 </span>
@@ -39,13 +39,14 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                 </NavigationMenu>
             </div>
 
-            {!isAuthPage && role === "customer" && (
+            {/* Navigation for Customer Role (includes Shop) */}
+            {!isAuthPage && currentUserRole === "customer" && (
                 <nav className="hidden md:flex flex-grow justify-center">
                     <NavigationMenu>
                         <NavigationMenuList className="space-x-8 text-gray-600 font-medium">
                             <NavigationMenuItem>
-                                <NavigationMenuLink 
-                                    href="/home" 
+                                <NavigationMenuLink
+                                    href="/home"
                                     className={`hover:text-gray-900 rounded-none ${
                                         page === "home" ? "border-b-2 border-gray-900 pb-1" : ""
                                     }`}
@@ -54,8 +55,8 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink 
-                                    href="/product-listing" 
+                                <NavigationMenuLink
+                                    href="/product-listing"
                                     className={`hover:text-gray-900 rounded-none ${
                                         page === "products" || page === "product-listing" ? "border-b-2 border-gray-900 pb-1" : ""
                                     }`}
@@ -64,8 +65,8 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink 
-                                    href="/about" 
+                                <NavigationMenuLink
+                                    href="/about"
                                     className={`hover:text-gray-900 rounded-none ${
                                         page === "about" ? "border-b-2 border-gray-900 pb-1" : ""
                                     }`}
@@ -74,8 +75,8 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink 
-                                    href="/contact" 
+                                <NavigationMenuLink
+                                    href="/contact"
                                     className={`hover:text-gray-900 rounded-none ${
                                         page === "contact" ? "border-b-2 border-gray-900 pb-1" : ""
                                     }`}
@@ -88,59 +89,94 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                 </nav>
             )}
 
+            {/* Navigation for Vendor Role (e.g., Vendor Products) */}
+            {!isAuthPage && currentUserRole === "vendor" && (
+                <nav className="hidden md:flex flex-grow justify-center">
+                    <NavigationMenu>
+                        <NavigationMenuList className="space-x-8 text-gray-600 font-medium">
+                            <NavigationMenuItem>
+                                <NavigationMenuLink
+                                    href="/vendor-home" // New Home link for vendors
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "vendor-home" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    Home
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem>
+                                <NavigationMenuLink
+                                    href="/vendor-products"
+                                    className={`hover:text-gray-900 rounded-none ${
+                                        page === "vendor-products" ? "border-b-2 border-gray-900 pb-1" : ""
+                                    }`}
+                                >
+                                    My Products
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                </nav>
+            )}
+
+
             <div className="flex items-center space-x-6">
-                {!isAuthPage && role === "customer" && (
+                {/* Icons for Customer Role */}
+                {!isAuthPage && currentUserRole === "customer" && (
                     <>
                         {/* Search Icon */}
                         <Link to="/search" aria-label="Search">
                             {page === "search" ? (
-                                // Filled search icon when on search page
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
-                                  <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clipRule="evenodd" />
                                 </svg>
                             ) : (
-                                // Outlined search icon for other pages
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             )}
                         </Link>
-                     {/* Heart/Wishlist Icon linking to wishlist */}
+                        {/* Heart/Wishlist Icon linking to wishlist */}
                         <Link to="/wishlist" aria-label="Wishlist">
                             {page === "wishlist" ? (
-                                // Filled heart icon when on wishlist page
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                 </svg>
                             ) : (
-                                // Outlined heart icon for other pages
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                 </svg>
                             )}
                         </Link>
                         {/* Shopping Bag Icon */}
                         <Link to="/cart" aria-label="Cart">
                             {page === "cart" ? (
-                                // Filled cart icon when on cart page
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
-                                  <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M7.5 6v.75H5.513c-.96 0-1.764.724-1.865 1.679l-1.263 12A1.875 1.875 0 004.25 22.5h15.5a1.875 1.875 0 001.865-2.071l-1.263-12a1.875 1.875 0 00-1.865-1.679H16.5V6a4.5 4.5 0 10-9 0zM12 3a3 3 0 00-3 3v.75h6V6a3 3 0 00-3-3z" clipRule="evenodd" />
                                 </svg>
                             ) : (
-                                // Outlined cart icon for other pages
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
                             )}
                         </Link>
                     </>
-                )}                
-                {!isAuthPage && role==="vendor"&&(
+                )}
+                {/* Icons for Vendor Role */}
+                {!isAuthPage && currentUserRole === "vendor" && (
                     <>
-                        {/* Search Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        {/* Search Icon (can be common for both roles) */}
+                        <Link to="/search" aria-label="Search">
+                            {page === "search" ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="currentColor" viewBox="0 0 24 24">
+                                    <path fillRule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69A8.25 8.25 0 012.25 10.5z" clipRule="evenodd" />
+                                </svg>
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-800 hover:text-gray-900 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </Link>
                         {/* Upload Icon */}
                         <Link to="/upload-product" className="text-gray-600 hover:text-gray-800 cursor-pointer">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

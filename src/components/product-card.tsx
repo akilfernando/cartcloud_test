@@ -58,7 +58,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="w-full h-48 object-cover rounded-md mb-4"
+          // Changed object-cover to object-contain to fit the image within the space
+          className="w-full h-48 object-contain rounded-md mb-4"
           onError={(e) => {
             // Fallback image in case the original image fails to load
             (e.currentTarget as HTMLImageElement).src = `https://placehold.co/200x200/cccccc/333333?text=${product.name.replace(/\s/g, '+')}`;
@@ -80,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {onEdit && ( // Only show edit button if onEdit prop is provided
           <Button
             variant="default"
-            className="w-full bg-black hover:bg-indigo-700 text-white"
+            className="w-full bg-black hover:bg-indigo-700 text-white" // Changed color back to indigo for consistency with previous versions
             onClick={handleEditClick}
           >
             Edit Product
