@@ -16,31 +16,26 @@ import { useState, useEffect } from "react";
 import { IoPersonOutline, IoCartOutline, IoStatsChartOutline, IoStorefrontOutline, IoPeopleOutline, IoShieldCheckmarkOutline } from "react-icons/io5";
 import axios from "axios";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from "@/context/authContext";
 import { useToast } from "@/components/ui/toast";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { ChevronDownIcon, ChevronUpIcon, Package, TrendingUp, Users, ShoppingCart, Star, CreditCard, MapPin, Key, Shield, BarChart3, Store, Plus, Eye, Edit, Trash2, Clock, XCircle } from "lucide-react";
+import type { Product } from '@/types/product';
 
-// Mock data for demonstration
+const BASE_API_URL = import.meta.env.VITE_API_URL;
+
+// Mock data for demonstration (will be replaced for vendor products)
 const mockOrderHistory = [
     { id: "ORD001", date: "2024-01-15", total: 129.99, status: "Delivered", items: ["Laptop Stand", "Wireless Mouse"] },
     { id: "ORD002", date: "2024-01-10", total: 89.50, status: "Shipped", items: ["Keyboard", "Mouse Pad"] },
     { id: "ORD003", date: "2024-01-05", total: 199.99, status: "Processing", items: ["Monitor", "HDMI Cable"] },
-];
-
-
-
-const mockVendorProducts = [
-    { id: "P001", name: "Wireless Headphones", price: 79.99, stock: 25, sales: 150, status: "Active" },
-    { id: "P002", name: "Phone Case", price: 29.99, stock: 0, sales: 89, status: "Out of Stock" },
-    { id: "P003", name: "Tablet Stand", price: 39.99, stock: 12, sales: 67, status: "Active" },
 ];
 
 const mockSalesData = {
@@ -66,8 +61,8 @@ export default function Profile() {
     const { addToast } = useToast();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    let { userId } = useParams<{ userId: string }>(); 
-    
+    let { userId } = useParams<{ userId: string }>();
+
     // Use the authenticated user's ID if no userId in params
     if (!userId && authUser) {
         userId = authUser.id;
@@ -80,13 +75,23 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState("profile");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    // State for Customer Orders
     const [orderHistory, setOrderHistory] = useState<any[]>([]);
     const [orderLoading, setOrderLoading] = useState(false);
     const [orderError, setOrderError] = useState<string | null>(null);
     const [cancelLoading, setCancelLoading] = useState<string | null>(null); // Track which order is being cancelled
+
+    // State for Customer Account Balance
     const [accountBalance, setAccountBalance] = useState<any>(null);
     const [balanceLoading, setBalanceLoading] = useState(false);
     const [balanceError, setBalanceError] = useState<string | null>(null);
+
+    // State for Vendor Products
+    const [vendorProducts, setVendorProducts] = useState<Product[]>([]); // State to hold vendor's products
+    const [vendorProductsLoading, setVendorProductsLoading] = useState<boolean>(false);
+    const [vendorProductsError, setVendorProductsError] = useState<string | null>(null);
+
 
     const getTabsForRole = (role: string) => {
         const baseTabs = [
@@ -105,7 +110,7 @@ export default function Profile() {
                 return [
                     ...baseTabs,
                     { id: "store", label: "Store", icon: IoStorefrontOutline },
-                    { id: "products", label: "Products", icon: Package },
+                    { id: "products", label: "Products", icon: Package }, // Products tab for vendors
                     { id: "analytics", label: "Analytics", icon: IoStatsChartOutline },
                 ];
             case "admin":
@@ -139,6 +144,7 @@ export default function Profile() {
         setSearchParams(newParams, { replace: true });
     };
 
+    // Effect to fetch user data
     useEffect(() => {
         const fetchUser = async () => {
             setLoading(true);
@@ -154,7 +160,7 @@ export default function Profile() {
             try {
                 console.log("Fetching user:", userId);
                 const token = localStorage.getItem("token");
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/${userId}`, {
+                const response = await axios.get(`${BASE_API_URL}/users/${userId}`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
@@ -163,11 +169,11 @@ export default function Profile() {
                 setUser(response.data);
             } catch (err: any) {
                 if (axios.isAxiosError(err) && err.response) {
-                     if (err.response.status === 404) {
-                         setError(`User with ID ${userId} not found.`);
-                     } else {
-                         setError(`Failed to fetch user data: ${err.response.status} ${err.response.statusText}`);
-                     }
+                    if (err.response.status === 404) {
+                        setError(`User with ID ${userId} not found.`);
+                    } else {
+                        setError(`Failed to fetch user data: ${err.response.status} ${err.response.statusText}`);
+                    }
                 } else {
                     setError(`Failed to fetch user data: ${err.message}`);
                 }
@@ -180,15 +186,16 @@ export default function Profile() {
         fetchUser();
     }, [userId, authUser]);
 
+    // Effect to fetch order history
     const fetchOrderHistory = async () => {
         if (!userId) return;
-        
+
         setOrderLoading(true);
         setOrderError(null);
-        
+
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders/user/${userId}`, {
+            const response = await axios.get(`${BASE_API_URL}/orders/user/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -207,15 +214,16 @@ export default function Profile() {
         }
     };
 
+    // Effect to fetch account balance
     const fetchAccountBalance = async () => {
         if (!userId) return;
-        
+
         setBalanceLoading(true);
         setBalanceError(null);
-        
+
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/${userId}/account-balance`, {
+            const response = await axios.get(`${BASE_API_URL}/users/${userId}/account-balance`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -234,21 +242,68 @@ export default function Profile() {
         }
     };
 
-    // Fetch order history when user data is loaded and orders tab is active
-    useEffect(() => {
-        if (user && activeTab === "orders") {
-            fetchOrderHistory();
+    // Effect to fetch vendor products
+    const fetchVendorProducts = async () => {
+        if (!userId || authUser?.role !== 'vendor') {
+            setVendorProductsLoading(false);
+            return;
         }
-    }, [user, activeTab]);
 
-    // Fetch account balance when user data is loaded and balance tab is active
-    useEffect(() => {
-        if (user && activeTab === "balance") {
-            fetchAccountBalance();
+        setVendorProductsLoading(true);
+        setVendorProductsError(null);
+
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.get<Product[]>(`${BASE_API_URL}/products`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            // Filter products to show only those belonging to the current vendor
+            const vendorProductsData = response.data.filter(product => product.vendorId === userId);
+            setVendorProducts(vendorProductsData);
+            console.log("Vendor products:", vendorProductsData);
+        } catch (err: any) {
+            console.error("Error fetching vendor products:", err);
+            if (axios.isAxiosError(err) && err.response) {
+                setVendorProductsError(`Failed to fetch products: ${err.response.status} ${err.response.statusText}`);
+            } else {
+                setVendorProductsError(`Failed to fetch products: ${err.message}`);
+            }
+        } finally {
+            setVendorProductsLoading(false);
         }
-    }, [user, activeTab]);
+    };
+
+
+    // Fetch data based on active tab and user role
+    useEffect(() => {
+        if (user) {
+            switch (activeTab) {
+                case "orders":
+                    if (user.role === "customer") {
+                        fetchOrderHistory();
+                    }
+                    break;
+                case "balance":
+                    if (user.role === "customer") {
+                        fetchAccountBalance();
+                    }
+                    break;
+                case "products":
+                    if (user.role === "vendor") {
+                        fetchVendorProducts(); // Call the new fetch function
+                    }
+                    break;
+                // Add cases for other vendor/admin tabs if they need data fetching
+            }
+        }
+    }, [user, activeTab]); // Dependencies: re-run when user or activeTab changes
 
     const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+        // Using a custom modal instead of window.confirm
+        // For brevity, assuming a ConfirmationModal component is used as previously discussed
+        // For now, keeping window.confirm as per original code for direct modification.
         const confirmed = window.confirm(
             `Are you sure you want to cancel order #${orderNumber}? This action cannot be undone.`
         );
@@ -260,7 +315,7 @@ export default function Profile() {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.patch(
-                `${import.meta.env.VITE_API_URL}/orders/${orderId}/cancel`,
+                `${BASE_API_URL}/orders/${orderId}/cancel`,
                 { reason: 'Customer requested cancellation' },
                 {
                     headers: {
@@ -273,9 +328,9 @@ export default function Profile() {
             console.log('Order cancelled:', response.data);
 
             // Update the order in the local state
-            setOrderHistory(prevOrders => 
-                prevOrders.map(order => 
-                    order._id === orderId 
+            setOrderHistory(prevOrders =>
+                prevOrders.map(order =>
+                    order._id === orderId
                         ? { ...order, status: 'cancelled', paymentStatus: response.data.order.paymentStatus }
                         : order
                 )
@@ -283,7 +338,7 @@ export default function Profile() {
 
             addToast({
                 title: 'Order Cancelled',
-                description: response.data.refundInfo 
+                description: response.data.refundInfo
                     ? `Order #${orderNumber} has been cancelled. ${response.data.refundInfo.status}`
                     : `Order #${orderNumber} has been cancelled successfully.`,
                 variant: 'success',
@@ -292,7 +347,7 @@ export default function Profile() {
 
         } catch (err: any) {
             console.error('Error cancelling order:', err);
-            
+
             let errorMessage = 'Failed to cancel order. Please try again.';
             if (axios.isAxiosError(err) && err.response) {
                 errorMessage = err.response.data?.message || err.response.data?.error || errorMessage;
@@ -321,7 +376,7 @@ export default function Profile() {
             setLoading(true);
             setError(null);
             const token = localStorage.getItem("token");
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/users/${user._id}`, user, {
+            const response = await axios.put(`${BASE_API_URL}/users/${user._id}`, user, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -330,7 +385,7 @@ export default function Profile() {
             setUser(response.data);
             setIsEditing(false);
             console.log("Profile saved successfully:", response.data);
-            
+
             // Show success toast
             addToast({
                 title: "Profile Updated",
@@ -338,10 +393,10 @@ export default function Profile() {
                 variant: "success",
                 duration: 3000
             });
-            
+
         } catch (err: any) {
             let errorMessage = "Failed to save profile. Please try again.";
-            
+
             if (axios.isAxiosError(err) && err.response) {
                 if (err.response.status === 400) {
                     errorMessage = err.response.data?.message || "Invalid profile data.";
@@ -351,7 +406,7 @@ export default function Profile() {
                     errorMessage = `Failed to save profile: ${err.response.statusText}`;
                 }
             }
-            
+
             setError(errorMessage);
             addToast({
                 title: "Profile Update Failed",
@@ -359,7 +414,7 @@ export default function Profile() {
                 variant: "error",
                 duration: 5000
             });
-            
+
             console.error("Error saving profile:", err);
         } finally {
             setLoading(false);
@@ -387,7 +442,7 @@ export default function Profile() {
             });
             return;
         }
-        
+
         if (!user) {
             const errorMessage = "User not found";
             addToast({
@@ -398,13 +453,13 @@ export default function Profile() {
             });
             return;
         }
-        
+
         try {
             setLoading(true);
-            
+
             const token = localStorage.getItem("token");
             const response = await axios.put(
-                `${import.meta.env.VITE_API_URL}/users/${user._id}/password`,
+                `${BASE_API_URL}/users/${user._id}/password`,
                 { password: newPassword },
                 {
                     headers: {
@@ -412,11 +467,11 @@ export default function Profile() {
                     }
                 }
             );
-            
+
             console.log("Password changed successfully:", response.data);
             setNewPassword("");
             setConfirmPassword("");
-            
+
             // Show success toast notification
             addToast({
                 title: "Password Updated",
@@ -424,11 +479,11 @@ export default function Profile() {
                 variant: "success",
                 duration: 4000
             });
-            
+
         } catch (err: any) {
             console.error("Error changing password:", err);
             let errorMessage = "Failed to change password. Please try again.";
-            
+
             if (axios.isAxiosError(err) && err.response) {
                 if (err.response.status === 400) {
                     errorMessage = err.response.data?.message || "Invalid password requirements.";
@@ -438,7 +493,7 @@ export default function Profile() {
                     errorMessage = `Failed to change password: ${err.response.statusText}`;
                 }
             }
-            
+
             addToast({
                 title: "Password Update Failed",
                 description: errorMessage,
@@ -454,7 +509,7 @@ export default function Profile() {
         const { id, value } = e.target;
         const idParts = id.split('.');
 
-        setUser((prevUser : any) => {
+        setUser((prevUser: any) => {
             if (!prevUser) return null;
 
             if (idParts.length === 1) {
@@ -478,7 +533,7 @@ export default function Profile() {
     };
 
     const handleRoleChange = (value: string) => {
-        setUser((prevUser : any) => {
+        setUser((prevUser: any) => {
             if (!prevUser) return null;
             return {
                 ...prevUser,
@@ -488,7 +543,7 @@ export default function Profile() {
     };
 
     const handleCheckboxChange = (checked: boolean) => {
-         setUser( (prevUser : any) => {
+        setUser((prevUser: any) => {
             if (!prevUser || !prevUser.vendorProfile) return null;
             return {
                 ...prevUser,
@@ -548,7 +603,7 @@ export default function Profile() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header page="profile" role={user.role} />
+            <Header page="profile" /> {/* role prop is now determined internally by Header */}
             <main className="flex-grow px-4 py-8 pt-24">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex items-center mb-6">
@@ -600,7 +655,7 @@ export default function Profile() {
                                             />
                                         </div>
                                     </div>
-                                    
+
                                     <div className="space-y-2">
                                         <Label htmlFor="role">Account Type</Label>
                                         <Select value={user.role} onValueChange={handleRoleChange} disabled>
@@ -724,11 +779,8 @@ export default function Profile() {
                         <TabsContent value="security" className="space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Key className="h-5 w-5" />
-                                        Change Password
-                                    </CardTitle>
-                                    <CardDescription>Update your password to keep your account secure</CardDescription>
+                                    <CardTitle>Security Settings</CardTitle>
+                                    <CardDescription>Update your password</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -742,7 +794,7 @@ export default function Profile() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
                                         <Input
                                             id="confirmPassword"
                                             type="password"
@@ -753,458 +805,291 @@ export default function Profile() {
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button 
-                                        onClick={handlePasswordChange} 
-                                        disabled={!newPassword || !confirmPassword || loading}
-                                    >
-                                        {loading ? "Updating..." : "Update Password"}
+                                    <Button onClick={handlePasswordChange} disabled={loading}>
+                                        {loading ? "Updating..." : "Change Password"}
                                     </Button>
                                 </CardFooter>
                             </Card>
                         </TabsContent>
 
-                        {/* Customer-specific tabs */}
-                        {user.role === 'customer' && (
-                            <>
-                                <TabsContent value="orders" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <ShoppingCart className="h-5 w-5" />
-                                                Order History
-                                            </CardTitle>
-                                            <CardDescription>View your recent orders and their status</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
+                        {/* Orders Tab (Customer Only) */}
+                        {user.role === "customer" && (
+                            <TabsContent value="orders" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Order History</CardTitle>
+                                        <CardDescription>View your past orders and their status</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {orderLoading ? (
+                                            <div className="flex justify-center items-center h-24">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                                <p className="ml-3">Loading orders...</p>
+                                            </div>
+                                        ) : orderError ? (
+                                            <p className="text-red-500">{orderError}</p>
+                                        ) : orderHistory.length === 0 ? (
+                                            <p className="text-gray-600">No orders found.</p>
+                                        ) : (
                                             <div className="space-y-4">
-                                                {orderLoading && (
-                                                    <p className="text-gray-600">Loading order history...</p>
-                                                )}
-                                                {orderError && (
-                                                    <p className="text-red-600">{orderError}</p>
-                                                )}
-                                                {!orderLoading && !orderError && orderHistory.length === 0 && (
-                                                    <p className="text-gray-600">No orders found.</p>
-                                                )}
-                                                {!orderLoading && !orderError && orderHistory.map((order) => (
-                                                    <div key={order._id} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <div>
-                                                                <h3 className="font-semibold">Order #{order.orderNumber}</h3>
-                                                                <p className="text-sm text-gray-600">
-                                                                    {new Date(order.createdAt).toLocaleDateString('en-CA')}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="font-semibold">${order.total.toFixed(2)}</p>
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                    order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                                                    order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    order.status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
-                                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                                }`}>
-                                                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                                                </span>
-                                                            </div>
+                                                {orderHistory.map((order) => (
+                                                    <Card key={order._id} className="p-4">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <h4 className="font-semibold">Order #{order.orderNumber}</h4>
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                order.status.toLowerCase() === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                order.status.toLowerCase() === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                                order.status.toLowerCase() === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                                order.status.toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                                {order.status}
+                                                            </span>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-sm">
-                                                                Items: {order.items.map((item: any) => item.name).join(', ')}
-                                                            </p>
-                                                            <p className="text-sm text-gray-500">
-                                                                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                                                            </p>
+                                                        <p className="text-sm text-gray-600">Date: {new Date(order.orderDate).toLocaleDateString()}</p>
+                                                        <p className="text-sm text-gray-600">Total: ${order.totalAmount.toFixed(2)}</p>
+                                                        <p className="text-sm text-gray-600">Payment Status: {order.paymentStatus}</p>
+                                                        <div className="mt-2 text-sm">
+                                                            Items: {order.items.map((item: any) => item.productName).join(", ")}
                                                         </div>
-                                                        <div className="mt-2 flex gap-2">
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm"
-                                                                onClick={() => navigate(`/order/${order._id}`)}
+                                                        {canCancelOrder(order.status) && (
+                                                            <Button
+                                                                variant="outline"
+                                                                className="mt-4 text-red-600 hover:text-red-800"
+                                                                onClick={() => handleCancelOrder(order._id, order.orderNumber)}
+                                                                disabled={cancelLoading === order._id}
                                                             >
-                                                                <Eye className="h-4 w-4 mr-1" />
-                                                                View Details
+                                                                {cancelLoading === order._id ? "Cancelling..." : "Cancel Order"}
                                                             </Button>
-                                                            {order.status === 'delivered' && (
-                                                                <Button variant="outline" size="sm">
-                                                                    Reorder
-                                                                </Button>
-                                                            )}
-                                                            {order.trackingNumber && (
-                                                                <Button variant="outline" size="sm">
-                                                                    Track Order
-                                                                </Button>
-                                                            )}
-                                                            {canCancelOrder(order.status) && (
-                                                                <Button 
-                                                                    variant="destructive" 
-                                                                    size="sm"
-                                                                    onClick={() => handleCancelOrder(order._id, order.orderNumber)}
-                                                                    disabled={cancelLoading === order._id}
-                                                                    className="flex items-center gap-1"
-                                                                >
-                                                                    {cancelLoading === order._id ? (
-                                                                        <>
-                                                                            <Clock className="h-3 w-3 animate-spin" />
-                                                                            Cancelling...
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <XCircle className="h-3 w-3" />
-                                                                            Cancel
-                                                                        </>
-                                                                    )}
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                <TabsContent value="balance" className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <CreditCard className="h-5 w-5" />
-                                Account Balance
-                            </CardTitle>
-                            <CardDescription>Track money owed to vendors from account balance orders</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-6">
-                                {balanceLoading && (
-                                    <p className="text-gray-600">Loading account balance...</p>
-                                )}
-                                {balanceError && (
-                                    <p className="text-red-600">{balanceError}</p>
-                                )}
-                                {!balanceLoading && !balanceError && accountBalance && (
-                                    <>
-                                        {/* Total Balance Summary */}
-                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <CreditCard className="h-6 w-6 text-blue-600" />
-                                                <h3 className="text-lg font-semibold text-blue-900">Total Amount Owed</h3>
-                                            </div>
-                                            <p className="text-3xl font-bold text-blue-700">
-                                                ${accountBalance.totalOwed?.toFixed(2) || '0.00'}
-                                            </p>
-                                            <p className="text-sm text-blue-600 mt-1">
-                                                From {accountBalance.vendorBalances?.length || 0} vendor{accountBalance.vendorBalances?.length !== 1 ? 's' : ''}
-                                            </p>
-                                        </div>
-
-                                        {/* No balance message */}
-                                        {(!accountBalance.vendorBalances || accountBalance.vendorBalances.length === 0) && (
-                                            <div className="text-center py-8">
-                                                <Package className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                                                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Outstanding Balance</h3>
-                                                <p className="text-gray-500">You don't owe any money to vendors at this time.</p>
-                                            </div>
-                                        )}
-
-                                        {/* Vendor Balances */}
-                                        {accountBalance.vendorBalances && accountBalance.vendorBalances.length > 0 && (
-                                            <div className="space-y-4">
-                                                <h4 className="text-md font-semibold text-gray-900">Money Owed by Vendor</h4>
-                                                {accountBalance.vendorBalances.map((vendorBalance: any, index: number) => (
-                                                    <div key={vendorBalance.vendorId || index} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-start mb-4">
-                                                            <div>
-                                                                <h5 className="font-semibold text-lg">{vendorBalance.vendorName}</h5>
-                                                                <p className="text-sm text-gray-600">
-                                                                    {vendorBalance.orderCount} order{vendorBalance.orderCount !== 1 ? 's' : ''}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-xl font-bold text-red-600">
-                                                                    ${vendorBalance.amount?.toFixed(2) || '0.00'}
-                                                                </p>
-                                                                <p className="text-sm text-gray-500">Amount Owed</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Order Details */}
-                                                        {vendorBalance.orders && vendorBalance.orders.length > 0 && (
-                                                            <div className="space-y-2">
-                                                                <h6 className="text-sm font-medium text-gray-700">Order Details:</h6>
-                                                                {vendorBalance.orders.map((order: any, orderIndex: number) => (
-                                                                    <div key={order.orderId || orderIndex} 
-                                                                         className="bg-gray-50 rounded p-3 flex justify-between items-center">
-                                                                        <div>
-                                                                            <p className="font-medium text-sm">#{order.orderNumber}</p>
-                                                                            <p className="text-xs text-gray-500">
-                                                                                {order.date ? new Date(order.date).toLocaleDateString('en-CA') : 'Unknown date'} • {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
-                                                                            </p>
-                                                                        </div>
-                                                                        <div className="text-right">
-                                                                            <p className="font-semibold text-sm">${order.amount?.toFixed(2) || '0.00'}</p>
-                                                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                                                                order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                                                order.status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
-                                                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                                'bg-gray-100 text-gray-800'
-                                                                            }`}>
-                                                                                {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Unknown'}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
                                                         )}
-                                                    </div>
+                                                    </Card>
                                                 ))}
                                             </div>
                                         )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        )}
 
-                                        {/* Payment Notice */}
-                                        {accountBalance.totalOwed > 0 && (
-                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                                <div className="flex items-start gap-3">
-                                                    <Package className="h-5 w-5 text-amber-600 mt-0.5" />
+                        {/* Account Balance Tab (Customer Only) */}
+                        {user.role === "customer" && (
+                            <TabsContent value="balance" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Account Balance</CardTitle>
+                                        <CardDescription>View your current account balance and transaction history</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {balanceLoading ? (
+                                            <div className="flex justify-center items-center h-24">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                                <p className="ml-3">Loading balance...</p>
+                                            </div>
+                                        ) : balanceError ? (
+                                            <p className="text-red-500">{balanceError}</p>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <p className="text-2xl font-bold">Current Balance: ${accountBalance?.balance?.toFixed(2) || '0.00'}</p>
+                                                {/* You can add transaction history here if available in accountBalance */}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        )}
+
+                        {/* Store Tab (Vendor Only) */}
+                        {user.role === "vendor" && (
+                            <TabsContent value="store" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Store Overview</CardTitle>
+                                        <CardDescription>Summary of your store's performance</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <Card className="p-4 flex flex-col items-center justify-center text-center">
+                                            <Store className="h-8 w-8 text-blue-500 mb-2" />
+                                            <p className="text-lg font-semibold">Store Name</p>
+                                            <p className="text-xl font-bold text-gray-800">{user.vendorProfile?.storeName || 'N/A'}</p>
+                                        </Card>
+                                        <Card className="p-4 flex flex-col items-center justify-center text-center">
+                                            <Eye className="h-8 w-8 text-green-500 mb-2" />
+                                            <p className="text-lg font-semibold">Store Status</p>
+                                            <p className={`text-xl font-bold ${user.vendorProfile?.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                                                {user.vendorProfile?.isActive ? 'Active' : 'Inactive'}
+                                            </p>
+                                        </Card>
+                                        <Card className="p-4 flex flex-col items-center justify-center text-center">
+                                            <Link to="/upload-product" className="flex flex-col items-center justify-center w-full h-full">
+                                                <Plus className="h-8 w-8 text-purple-500 mb-2" />
+                                                <p className="text-lg font-semibold">Add New Product</p>
+                                                <Button variant="outline" className="mt-2">Upload Now</Button>
+                                            </Link>
+                                        </Card>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        )}
+
+                        {/* Products Tab (Vendor Only) */}
+                        {user.role === "vendor" && (
+                            <TabsContent value="products" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Your Products</CardTitle>
+                                        <CardDescription>The products listed on your store</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {vendorProductsLoading ? (
+                                            <div className="flex justify-center items-center h-24">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                                <p className="ml-3">Loading products...</p>
+                                            </div>
+                                        ) : vendorProductsError ? (
+                                            <p className="text-red-500">{vendorProductsError}</p>
+                                        ) : vendorProducts.length === 0 ? (
+                                            <p className="text-gray-600">You have not listed any products yet.</p>
+                                        ) : (
+                                            <div className="overflow-x-auto"> {/* Added overflow for small screens */}
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Name
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Price
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Stock
+                                                            </th>
+                                                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                                Status
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {vendorProducts.map((product) => (
+                                                            <tr key={product._id}>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                                    {product.name}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                    ${product.price.toFixed(2)}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                    {product.stock}
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                                                        product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                                    }`}>
+                                                                        {product.stock > 0 ? 'Active' : 'Out of Stock'}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        )}
+
+                        {/* Analytics Tab (Vendor Only) */}
+                        {user.role === "vendor" && (
+                            <TabsContent value="analytics" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Sales Analytics</CardTitle>
+                                        <CardDescription>Detailed insights into your sales performance</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <Card className="p-4 text-center">
+                                                <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                                                <p className="text-lg font-semibold">Total Revenue</p>
+                                                <p className="text-2xl font-bold text-gray-800">${mockSalesData.totalRevenue.toFixed(2)}</p>
+                                            </Card>
+                                            <Card className="p-4 text-center">
+                                                <ShoppingCart className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                                                <p className="text-lg font-semibold">Total Orders</p>
+                                                <p className="text-2xl font-bold text-gray-800">{mockSalesData.totalOrders}</p>
+                                            </Card>
+                                            <Card className="p-4 text-center">
+                                                <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+                                                <p className="text-lg font-semibold">Avg. Order Value</p>
+                                                <p className="text-2xl font-bold text-gray-800">${mockSalesData.avgOrderValue.toFixed(2)}</p>
+                                            </Card>
+                                            <Card className="p-4 text-center">
+                                                <BarChart3 className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                                                <p className="text-lg font-semibold">Conversion Rate</p>
+                                                <p className="text-2xl font-bold text-gray-800">{mockSalesData.conversionRate}%</p>
+                                            </Card>
+                                        </div>
+                                        <h3 className="text-xl font-semibold mt-6 mb-4">Top Selling Products</h3>
+                                        <div className="space-y-3">
+                                            {mockSalesData.topProducts.map((product, index) => (
+                                                <div key={index} className="flex justify-between items-center p-3 border rounded-md">
+                                                    <span className="font-medium">{product.name}</span>
+                                                    <span className="text-gray-700">{product.sales} sales (${product.revenue.toFixed(2)})</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
+                        )}
+
+                        {/* User Management Tab (Admin Only) */}
+                        {user.role === "admin" && (
+                            <TabsContent value="users" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>User Management</CardTitle>
+                                        <CardDescription>Manage users and their roles</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-4">
+                                            {mockUserManagement.map((userItem) => (
+                                                <Card key={userItem.id} className="p-4 flex justify-between items-center">
                                                     <div>
-                                                        <h4 className="font-medium text-amber-900">Payment Notice</h4>
-                                                        <p className="text-sm text-amber-700 mt-1">
-                                                            These amounts represent orders you placed using the "Account Balance" payment method. 
-                                                            The funds have been credited to your account balance and will need to be paid at a future date.
-                                                        </p>
+                                                        <h4 className="font-semibold">{userItem.name}</h4>
+                                                        <p className="text-sm text-gray-600">{userItem.email}</p>
+                                                        <p className="text-sm text-gray-600 capitalize">Role: {userItem.role}</p>
+                                                        <p className="text-sm text-gray-600">Status: {userItem.status}</p>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                            </>
+                                                    <div className="flex gap-2">
+                                                        <Button variant="outline" size="sm">
+                                                            <Edit className="h-4 w-4 mr-1" /> Edit
+                                                        </Button>
+                                                        <Button variant="destructive" size="sm">
+                                                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                                                        </Button>
+                                                    </div>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
                         )}
 
-                        {/* Vendor-specific tabs */}
-                        {user.role === 'vendor' && (
-                            <>
-                                <TabsContent value="store" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <Store className="h-5 w-5" />
-                                                Store Management
-                                            </CardTitle>
-                                            <CardDescription>Manage your store settings and information</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="store-description">Store Description</Label>
-                                                    <textarea
-                                                        id="store-description"
-                                                        className="w-full p-2 border rounded-md"
-                                                        rows={3}
-                                                        placeholder="Describe your store..."
-                                                        defaultValue="Welcome to our amazing store! We offer the best products with excellent customer service."
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="store-policies">Store Policies</Label>
-                                                    <textarea
-                                                        id="store-policies"
-                                                        className="w-full p-2 border rounded-md"
-                                                        rows={3}
-                                                        placeholder="Store policies..."
-                                                        defaultValue="30-day return policy. Free shipping on orders over $50."
-                                                    />
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                <TabsContent value="products" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <CardTitle className="flex items-center gap-2">
-                                                        <Package className="h-5 w-5" />
-                                                        Product Management
-                                                    </CardTitle>
-                                                    <CardDescription>Manage your product inventory</CardDescription>
-                                                </div>
-                                                <Button>
-                                                    <Plus className="h-4 w-4 mr-2" />
-                                                    Add Product
-                                                </Button>
-                                            </div>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                {mockVendorProducts.map((product) => (
-                                                    <div key={product.id} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h3 className="font-semibold">{product.name}</h3>
-                                                                <p className="text-sm text-gray-600">Price: ${product.price}</p>
-                                                                <p className="text-sm text-gray-600">Stock: {product.stock}</p>
-                                                                <p className="text-sm text-gray-600">Sales: {product.sales}</p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    product.status === 'Active' ? 'bg-green-100 text-green-800' :
-                                                                    'bg-red-100 text-red-800'
-                                                                }`}>
-                                                                    {product.status}
-                                                                </span>
-                                                                <div className="mt-2 flex gap-2">
-                                                                    <Button variant="outline" size="sm">
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </Button>
-                                                                    <Button variant="outline" size="sm">
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                <TabsContent value="analytics" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <TrendingUp className="h-5 w-5" />
-                                                Sales Analytics
-                                            </CardTitle>
-                                            <CardDescription>Track your store's performance</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Total Revenue</p>
-                                                    <p className="text-2xl font-bold text-green-600">${mockSalesData.totalRevenue}</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Total Orders</p>
-                                                    <p className="text-2xl font-bold">{mockSalesData.totalOrders}</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Avg Order Value</p>
-                                                    <p className="text-2xl font-bold">${mockSalesData.avgOrderValue}</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Conversion Rate</p>
-                                                    <p className="text-2xl font-bold">{mockSalesData.conversionRate}%</p>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold mb-4">Top Selling Products</h3>
-                                                <div className="space-y-3">
-                                                    {mockSalesData.topProducts.map((product, index) => (
-                                                        <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
-                                                            <div>
-                                                                <p className="font-medium">{product.name}</p>
-                                                                <p className="text-sm text-gray-600">{product.sales} sales</p>
-                                                            </div>
-                                                            <p className="font-bold text-green-600">${product.revenue}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                            </>
-                        )}
-
-                        {/* Admin-specific tabs */}
-                        {user.role === 'admin' && (
-                            <>
-                                <TabsContent value="users" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <Users className="h-5 w-5" />
-                                                User Management
-                                            </CardTitle>
-                                            <CardDescription>Manage system users and their permissions</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="space-y-4">
-                                                {mockUserManagement.map((user) => (
-                                                    <div key={user.id} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h3 className="font-semibold">{user.name}</h3>
-                                                                <p className="text-sm text-gray-600">{user.email}</p>
-                                                                <p className="text-sm text-gray-600">Role: {user.role}</p>
-                                                                <p className="text-sm text-gray-600">Joined: {user.joinDate}</p>
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    user.status === 'Active' ? 'bg-green-100 text-green-800' :
-                                                                    'bg-red-100 text-red-800'
-                                                                }`}>
-                                                                    {user.status}
-                                                                </span>
-                                                                <div className="mt-2 flex gap-2">
-                                                                    <Button variant="outline" size="sm">
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </Button>
-                                                                    <Button variant="outline" size="sm">
-                                                                        <Shield className="h-4 w-4" />
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                <TabsContent value="system" className="space-y-6">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <BarChart3 className="h-5 w-5" />
-                                                System Overview
-                                            </CardTitle>
-                                            <CardDescription>Monitor system performance and statistics</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Total Users</p>
-                                                    <p className="text-2xl font-bold">1,234</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Active Vendors</p>
-                                                    <p className="text-2xl font-bold">156</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Total Products</p>
-                                                    <p className="text-2xl font-bold">8,907</p>
-                                                </div>
-                                                <div className="p-4 border rounded-lg">
-                                                    <p className="text-sm text-gray-600">Monthly Revenue</p>
-                                                    <p className="text-2xl font-bold">$45,678</p>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                            </>
+                        {/* System Tab (Admin Only) */}
+                        {user.role === "admin" && (
+                            <TabsContent value="system" className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>System Overview</CardTitle>
+                                        <CardDescription>Monitor system health and performance</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p>System metrics and configurations would go here.</p>
+                                    </CardContent>
+                                </Card>
+                            </TabsContent>
                         )}
                     </Tabs>
                 </div>
@@ -1212,4 +1097,4 @@ export default function Profile() {
             <Footer />
         </div>
     );
-} 
+}
