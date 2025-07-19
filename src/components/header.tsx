@@ -136,7 +136,7 @@ export default function Header({ page }: HeaderProps) {
                                                         : "border-transparent hover:border-gray-300"
                                                 }`}
                                             >
-                                                Home
+                                                Dashboard
                                             </Link>
                                         </NavigationMenuItem>
                                         <NavigationMenuItem>
