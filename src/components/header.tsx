@@ -134,7 +134,7 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                             )}
                         </Link>
                     </>
-                )}
+                )}                
                 {!isAuthPage && role==="vendor"&&(
                     <>
                         {/* Search Icon */}
@@ -142,21 +142,11 @@ export default function Header({ page, role = "customer" }: HeaderProps) {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         {/* Upload Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
-                        </svg>
-                    </>
-                )}
-                {!isAuthPage && role==="vendor"&&(
-                    <>
-                        {/* Search Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        {/* Upload Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
-                        </svg>
+                        <Link to="/upload-product" className="text-gray-600 hover:text-gray-800 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4m0 0l-4 4m4-4v11" />
+                            </svg>
+                        </Link>
                     </>
                 )}
                 {user && !isAuthPage && (
