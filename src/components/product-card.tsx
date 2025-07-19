@@ -1,14 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import type { Product } from '@/types/product';
+import type { Product } from '@/types/product'; // Import Product from the central file
 
 interface ProductCardProps {
   product: Product;
   showCategory?: boolean;
   showRemoveButton?: boolean;
   onRemove?: (id: string) => void;
-  onEdit?: (product: Product) => void; // New prop for edit action
+  onEdit?: (product: Product) => void;
+  onDelete?: (product: Product) => void; // New prop for delete action
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -16,7 +17,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showCategory = true,
   showRemoveButton = false,
   onRemove,
-  onEdit // Destructure the new onEdit prop
+  onEdit,
+  onDelete // Destructure the new onDelete prop
 }) => {
   // Handle both _id and id properties
   const productId = product._id || product.id || '';
@@ -34,6 +36,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation(); // Stop event propagation to prevent link from being triggered
     if (onEdit) {
       onEdit(product);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default link behavior
+    e.stopPropagation(); // Stop event propagation to prevent link from being triggered
+    if (onDelete) {
+      onDelete(product);
     }
   };
 
@@ -69,11 +79,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="flex flex-col gap-2 mt-4 w-full px-2"> {/* Added padding for better spacing */}
         {onEdit && ( // Only show edit button if onEdit prop is provided
           <Button
-            variant="default" // You can choose a different variant if needed
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+            variant="default"
+            className="w-full bg-black hover:bg-indigo-700 text-white"
             onClick={handleEditClick}
           >
             Edit Product
+          </Button>
+        )}
+        {onDelete && ( // Only show delete button if onDelete prop is provided
+          <Button
+            variant="destructive" // Tailwind's red color for destructive actions
+            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            onClick={handleDeleteClick}
+          >
+            Delete Product
           </Button>
         )}
         {showRemoveButton && onRemove && (
