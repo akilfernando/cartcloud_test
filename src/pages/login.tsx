@@ -15,6 +15,7 @@ export default function Login() {
     const navigate = useNavigate();
     const { user, isLoading, login } = useAuth();
     const [error, setError] = useState<string | null>("");
+    const role = user?.role || "customer";
 
     const validationSchema = Yup.object({
         email: Yup.string()
@@ -25,9 +26,13 @@ export default function Login() {
     });
 
     useEffect(() => {
-        // Redirect authenticated users away from login page
-        if (!isLoading && user) {
-            navigate("/");
+        if (user && localStorage.getItem("token")) {
+            if (role === "vendor")
+                navigate("/vendor-home");
+            else
+            {
+                navigate("/home");
+            }
         }
     }, [user, isLoading, navigate]);
 

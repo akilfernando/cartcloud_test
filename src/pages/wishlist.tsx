@@ -14,7 +14,9 @@ interface WishlistItem {
   name: string;
   price: number;
   imageUrl: string;
-  category?: string;
+  category: string;
+  stock: number;
+  vendorId: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -48,7 +50,9 @@ const Wishlist: React.FC = () => {
             name: product.name ?? "Unknown",
             price: product.price ?? 0,
             imageUrl: product.imageUrl ?? "https://placehold.co/200x200?text=No+Image",
-            category: product.category ?? "",
+            category: product.category ?? "Unknown",
+            stock: product.stock ?? 0,
+            vendorId: product.vendorId ?? "",
           };
           return itemObj;
         });

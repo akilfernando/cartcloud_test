@@ -19,6 +19,7 @@ import Payment from './pages/payment';
 import OrderDetails from './pages/order-details';
 import NotFound from './pages/not-found';
 import UploadProductPage from './pages/upload-product';
+import VendorProductsPage from './pages/vendor-products-page';
 
 function App() {
   return (
@@ -56,6 +57,11 @@ function App() {
             <Route path="/vendor-home" element={
               <ProtectedRoute>
                 <VendorHomePage/>
+              </ProtectedRoute>
+            } />
+            <Route path="/vendor-products" element={
+              <ProtectedRoute>
+                <VendorProductsPage/>
               </ProtectedRoute>
             } />
             <Route path="/contact" element={

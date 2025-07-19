@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import { Link } from 'react-router-dom';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -95,7 +96,7 @@ const VendorHomePage = () => {
     const secondPercent = (analytics.pendingSales / total) * 100;
     return (
         <>
-            <Header page="vendor-home" role="vendor" />
+            <Header page="vendor-home"/>
             <main className="flex-grow  container mx-auto px-4 py-8 md:py-12 mt-16">
                 <div className="flex gap-6 justify-center items-center">
                     <div className="w-[70%]  bg-white rounded-lg  overflow-hidden flex flex-col gap-6">
@@ -135,8 +136,10 @@ const VendorHomePage = () => {
                     </div>
                     <div className="w-[25%] h-[50%] bg-white rounded-lg border border-gray-300 overflow-hidden p-4 md:p-8 flex flex-col ">
                         <img src={VendorExample.storeImage} alt={"Store Image"} className="w-full object-cover" />
-                        <h2 className='font-semibold py-2'>{VendorExample.storeName}</h2>
-                        <Button className="w-full md:w-auto">View Products in Store</Button>
+                        <h2 className='font-semibold py-2 text-center'>{VendorExample.storeName}</h2>
+                        <Link to="/vendor-products" className="self-center">
+                            <Button className="w-full md:w-auto">View Products in Store</Button>
+                        </Link>
 
                     </div>
                 </div>
