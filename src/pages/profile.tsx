@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 import { IoPersonOutline, IoCartOutline, IoStatsChartOutline, IoStorefrontOutline, IoPeopleOutline, IoShieldCheckmarkOutline } from "react-icons/io5";
 import axios from "axios";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from "@/context/authContext";
 import { useToast } from "@/components/ui/toast";
 import {
@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDownIcon, ChevronUpIcon, Package, TrendingUp, Users, ShoppingCart, Star, CreditCard, MapPin, Key, Shield, BarChart3, Store, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, Package, TrendingUp, Users, ShoppingCart, Star, CreditCard, MapPin, Key, Shield, BarChart3, Store, Plus, Eye, Edit, Trash2, Clock, XCircle } from "lucide-react";
 
 // Mock data for demonstration
 const mockOrderHistory = [
@@ -64,6 +64,8 @@ const mockUserManagement = [
 export default function Profile() {
     const { user: authUser } = useAuth();
     const { addToast } = useToast();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     let { userId } = useParams<{ userId: string }>(); 
     
     // Use the authenticated user's ID if no userId in params
@@ -78,6 +80,64 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState("profile");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [orderHistory, setOrderHistory] = useState<any[]>([]);
+    const [orderLoading, setOrderLoading] = useState(false);
+    const [orderError, setOrderError] = useState<string | null>(null);
+    const [cancelLoading, setCancelLoading] = useState<string | null>(null); // Track which order is being cancelled
+    const [accountBalance, setAccountBalance] = useState<any>(null);
+    const [balanceLoading, setBalanceLoading] = useState(false);
+    const [balanceError, setBalanceError] = useState<string | null>(null);
+
+    const getTabsForRole = (role: string) => {
+        const baseTabs = [
+            { id: "profile", label: "Profile", icon: IoPersonOutline },
+            { id: "security", label: "Security", icon: IoShieldCheckmarkOutline },
+        ];
+
+        switch (role) {
+            case "customer":
+                return [
+                    ...baseTabs,
+                    { id: "orders", label: "Orders", icon: IoCartOutline },
+                    { id: "balance", label: "Account Balance", icon: CreditCard },
+                ];
+            case "vendor":
+                return [
+                    ...baseTabs,
+                    { id: "store", label: "Store", icon: IoStorefrontOutline },
+                    { id: "products", label: "Products", icon: Package },
+                    { id: "analytics", label: "Analytics", icon: IoStatsChartOutline },
+                ];
+            case "admin":
+                return [
+                    ...baseTabs,
+                    { id: "users", label: "Users", icon: IoPeopleOutline },
+                    { id: "system", label: "System", icon: BarChart3 },
+                ];
+            default:
+                return baseTabs;
+        }
+    };
+
+    // Handle initial tab from URL parameters
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam && user) {
+            const validTabs = getTabsForRole(user.role).map(tab => tab.id);
+            if (validTabs.includes(tabParam)) {
+                setActiveTab(tabParam);
+            }
+        }
+    }, [searchParams, user]);
+
+    // Handle tab changes and update URL
+    const handleTabChange = (newTab: string) => {
+        setActiveTab(newTab);
+        // Update URL without triggering navigation
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('tab', newTab);
+        setSearchParams(newParams, { replace: true });
+    };
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -119,6 +179,140 @@ export default function Profile() {
 
         fetchUser();
     }, [userId, authUser]);
+
+    const fetchOrderHistory = async () => {
+        if (!userId) return;
+        
+        setOrderLoading(true);
+        setOrderError(null);
+        
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders/user/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            console.log("Order history:", response.data);
+            setOrderHistory(response.data);
+        } catch (err: any) {
+            console.error("Error fetching order history:", err);
+            if (axios.isAxiosError(err) && err.response) {
+                setOrderError(`Failed to fetch order history: ${err.response.status} ${err.response.statusText}`);
+            } else {
+                setOrderError(`Failed to fetch order history: ${err.message}`);
+            }
+        } finally {
+            setOrderLoading(false);
+        }
+    };
+
+    const fetchAccountBalance = async () => {
+        if (!userId) return;
+        
+        setBalanceLoading(true);
+        setBalanceError(null);
+        
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/${userId}/account-balance`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            console.log("Account balance:", response.data);
+            setAccountBalance(response.data);
+        } catch (err: any) {
+            console.error("Error fetching account balance:", err);
+            if (axios.isAxiosError(err) && err.response) {
+                setBalanceError(`Failed to fetch account balance: ${err.response.status} ${err.response.statusText}`);
+            } else {
+                setBalanceError(`Failed to fetch account balance: ${err.message}`);
+            }
+        } finally {
+            setBalanceLoading(false);
+        }
+    };
+
+    // Fetch order history when user data is loaded and orders tab is active
+    useEffect(() => {
+        if (user && activeTab === "orders") {
+            fetchOrderHistory();
+        }
+    }, [user, activeTab]);
+
+    // Fetch account balance when user data is loaded and balance tab is active
+    useEffect(() => {
+        if (user && activeTab === "balance") {
+            fetchAccountBalance();
+        }
+    }, [user, activeTab]);
+
+    const handleCancelOrder = async (orderId: string, orderNumber: string) => {
+        const confirmed = window.confirm(
+            `Are you sure you want to cancel order #${orderNumber}? This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        setCancelLoading(orderId);
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.patch(
+                `${import.meta.env.VITE_API_URL}/orders/${orderId}/cancel`,
+                { reason: 'Customer requested cancellation' },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log('Order cancelled:', response.data);
+
+            // Update the order in the local state
+            setOrderHistory(prevOrders => 
+                prevOrders.map(order => 
+                    order._id === orderId 
+                        ? { ...order, status: 'cancelled', paymentStatus: response.data.order.paymentStatus }
+                        : order
+                )
+            );
+
+            addToast({
+                title: 'Order Cancelled',
+                description: response.data.refundInfo 
+                    ? `Order #${orderNumber} has been cancelled. ${response.data.refundInfo.status}`
+                    : `Order #${orderNumber} has been cancelled successfully.`,
+                variant: 'success',
+                duration: 6000
+            });
+
+        } catch (err: any) {
+            console.error('Error cancelling order:', err);
+            
+            let errorMessage = 'Failed to cancel order. Please try again.';
+            if (axios.isAxiosError(err) && err.response) {
+                errorMessage = err.response.data?.message || err.response.data?.error || errorMessage;
+            }
+
+            addToast({
+                title: 'Cancellation Failed',
+                description: errorMessage,
+                variant: 'error',
+                duration: 5000
+            });
+        } finally {
+            setCancelLoading(null);
+        }
+    };
+
+    const canCancelOrder = (status: string) => {
+        const cancellableStatuses = ['pending', 'confirmed', 'processing'];
+        return cancellableStatuses.includes(status.toLowerCase());
+    };
 
     const handleSave = async () => {
         if (!user) return;
@@ -306,36 +500,6 @@ export default function Profile() {
         });
     };
 
-    const getTabsForRole = (role: string) => {
-        const baseTabs = [
-            { id: "profile", label: "Profile", icon: IoPersonOutline },
-            { id: "security", label: "Security", icon: IoShieldCheckmarkOutline },
-        ];
-
-        switch (role) {
-            case "customer":
-                return [
-                    ...baseTabs,
-                    { id: "orders", label: "Orders", icon: IoCartOutline },
-                ];
-            case "vendor":
-                return [
-                    ...baseTabs,
-                    { id: "store", label: "Store", icon: IoStorefrontOutline },
-                    { id: "products", label: "Products", icon: Package },
-                    { id: "analytics", label: "Analytics", icon: IoStatsChartOutline },
-                ];
-            case "admin":
-                return [
-                    ...baseTabs,
-                    { id: "users", label: "Users", icon: IoPeopleOutline },
-                    { id: "system", label: "System", icon: BarChart3 },
-                ];
-            default:
-                return baseTabs;
-        }
-    };
-
     if (loading) {
         return (
             <div className="flex flex-col min-h-screen">
@@ -395,7 +559,7 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                         <div className="flex justify-center mb-6">
                             <TabsList className="inline-flex">
                                 {tabs.map((tab) => (
@@ -613,35 +777,84 @@ export default function Profile() {
                                         </CardHeader>
                                         <CardContent>
                                             <div className="space-y-4">
-                                                {mockOrderHistory.map((order) => (
-                                                    <div key={order.id} className="border rounded-lg p-4">
+                                                {orderLoading && (
+                                                    <p className="text-gray-600">Loading order history...</p>
+                                                )}
+                                                {orderError && (
+                                                    <p className="text-red-600">{orderError}</p>
+                                                )}
+                                                {!orderLoading && !orderError && orderHistory.length === 0 && (
+                                                    <p className="text-gray-600">No orders found.</p>
+                                                )}
+                                                {!orderLoading && !orderError && orderHistory.map((order) => (
+                                                    <div key={order._id} className="border rounded-lg p-4">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div>
-                                                                <h3 className="font-semibold">Order #{order.id}</h3>
-                                                                <p className="text-sm text-gray-600">{order.date}</p>
+                                                                <h3 className="font-semibold">Order #{order.orderNumber}</h3>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {new Date(order.createdAt).toLocaleDateString('en-CA')}
+                                                                </p>
                                                             </div>
                                                             <div className="text-right">
-                                                                <p className="font-semibold">${order.total}</p>
+                                                                <p className="font-semibold">${order.total.toFixed(2)}</p>
                                                                 <span className={`px-2 py-1 rounded text-xs ${
-                                                                    order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                                                                    order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
-                                                                    'bg-yellow-100 text-yellow-800'
+                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                    order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                                    order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    order.status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
+                                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                    'bg-gray-100 text-gray-800'
                                                                 }`}>
-                                                                    {order.status}
+                                                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm">Items: {order.items.join(', ')}</p>
+                                                            <p className="text-sm">
+                                                                Items: {order.items.map((item: any) => item.name).join(', ')}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500">
+                                                                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                                                            </p>
                                                         </div>
                                                         <div className="mt-2 flex gap-2">
-                                                            <Button variant="outline" size="sm">
+                                                            <Button 
+                                                                variant="outline" 
+                                                                size="sm"
+                                                                onClick={() => navigate(`/order/${order._id}`)}
+                                                            >
                                                                 <Eye className="h-4 w-4 mr-1" />
                                                                 View Details
                                                             </Button>
-                                                            {order.status === 'Delivered' && (
+                                                            {order.status === 'delivered' && (
                                                                 <Button variant="outline" size="sm">
                                                                     Reorder
+                                                                </Button>
+                                                            )}
+                                                            {order.trackingNumber && (
+                                                                <Button variant="outline" size="sm">
+                                                                    Track Order
+                                                                </Button>
+                                                            )}
+                                                            {canCancelOrder(order.status) && (
+                                                                <Button 
+                                                                    variant="destructive" 
+                                                                    size="sm"
+                                                                    onClick={() => handleCancelOrder(order._id, order.orderNumber)}
+                                                                    disabled={cancelLoading === order._id}
+                                                                    className="flex items-center gap-1"
+                                                                >
+                                                                    {cancelLoading === order._id ? (
+                                                                        <>
+                                                                            <Clock className="h-3 w-3 animate-spin" />
+                                                                            Cancelling...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <XCircle className="h-3 w-3" />
+                                                                            Cancel
+                                                                        </>
+                                                                    )}
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -651,6 +864,126 @@ export default function Profile() {
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
+
+                <TabsContent value="balance" className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CreditCard className="h-5 w-5" />
+                                Account Balance
+                            </CardTitle>
+                            <CardDescription>Track money owed to vendors from account balance orders</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                                {balanceLoading && (
+                                    <p className="text-gray-600">Loading account balance...</p>
+                                )}
+                                {balanceError && (
+                                    <p className="text-red-600">{balanceError}</p>
+                                )}
+                                {!balanceLoading && !balanceError && accountBalance && (
+                                    <>
+                                        {/* Total Balance Summary */}
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <CreditCard className="h-6 w-6 text-blue-600" />
+                                                <h3 className="text-lg font-semibold text-blue-900">Total Amount Owed</h3>
+                                            </div>
+                                            <p className="text-3xl font-bold text-blue-700">
+                                                ${accountBalance.totalOwed?.toFixed(2) || '0.00'}
+                                            </p>
+                                            <p className="text-sm text-blue-600 mt-1">
+                                                From {accountBalance.vendorBalances?.length || 0} vendor{accountBalance.vendorBalances?.length !== 1 ? 's' : ''}
+                                            </p>
+                                        </div>
+
+                                        {/* No balance message */}
+                                        {(!accountBalance.vendorBalances || accountBalance.vendorBalances.length === 0) && (
+                                            <div className="text-center py-8">
+                                                <Package className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                                                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Outstanding Balance</h3>
+                                                <p className="text-gray-500">You don't owe any money to vendors at this time.</p>
+                                            </div>
+                                        )}
+
+                                        {/* Vendor Balances */}
+                                        {accountBalance.vendorBalances && accountBalance.vendorBalances.length > 0 && (
+                                            <div className="space-y-4">
+                                                <h4 className="text-md font-semibold text-gray-900">Money Owed by Vendor</h4>
+                                                {accountBalance.vendorBalances.map((vendorBalance: any, index: number) => (
+                                                    <div key={vendorBalance.vendorId || index} className="border rounded-lg p-4">
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div>
+                                                                <h5 className="font-semibold text-lg">{vendorBalance.vendorName}</h5>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {vendorBalance.orderCount} order{vendorBalance.orderCount !== 1 ? 's' : ''}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-xl font-bold text-red-600">
+                                                                    ${vendorBalance.amount?.toFixed(2) || '0.00'}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500">Amount Owed</p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Order Details */}
+                                                        {vendorBalance.orders && vendorBalance.orders.length > 0 && (
+                                                            <div className="space-y-2">
+                                                                <h6 className="text-sm font-medium text-gray-700">Order Details:</h6>
+                                                                {vendorBalance.orders.map((order: any, orderIndex: number) => (
+                                                                    <div key={order.orderId || orderIndex} 
+                                                                         className="bg-gray-50 rounded p-3 flex justify-between items-center">
+                                                                        <div>
+                                                                            <p className="font-medium text-sm">#{order.orderNumber}</p>
+                                                                            <p className="text-xs text-gray-500">
+                                                                                {order.date ? new Date(order.date).toLocaleDateString('en-CA') : 'Unknown date'} • {order.itemCount} item{order.itemCount !== 1 ? 's' : ''}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="text-right">
+                                                                            <p className="font-semibold text-sm">${order.amount?.toFixed(2) || '0.00'}</p>
+                                                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                                                order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                                order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                                                order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                                                order.status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
+                                                                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
+                                                                            }`}>
+                                                                                {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Unknown'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Payment Notice */}
+                                        {accountBalance.totalOwed > 0 && (
+                                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                                <div className="flex items-start gap-3">
+                                                    <Package className="h-5 w-5 text-amber-600 mt-0.5" />
+                                                    <div>
+                                                        <h4 className="font-medium text-amber-900">Payment Notice</h4>
+                                                        <p className="text-sm text-amber-700 mt-1">
+                                                            These amounts represent orders you placed using the "Account Balance" payment method. 
+                                                            The funds have been credited to your account balance and will need to be paid at a future date.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
                             </>
                         )}
 

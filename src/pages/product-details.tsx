@@ -6,6 +6,11 @@ import Footer from '@/components/footer';
 import axios from 'axios';
 import { HeartIcon } from 'lucide-react';
 import { useParams, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/authContext';
+import { useCart } from '../context/cartContext';
+import { useToast } from '../components/ui/toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Defines the structure of product data.
 interface Product {
@@ -88,6 +93,9 @@ const MessageModal: React.FC<MessageModalProps> = ({ message, onClose }) => {
 const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
+  const { user } = useAuth();
+  const { addToCart, loading: cartLoading } = useCart();
+  const { addToast } = useToast();
 
   // Product either passed through navigation state or will be fetched
   const [product, setProduct] = useState<Product | undefined>(
@@ -104,9 +112,6 @@ const ProductDetails: React.FC = () => {
 
   // Backend base URL (fallback to localhost if env not set)
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-  // Temporary: use stored userId or a hard-coded fallback
-  const userId = localStorage.getItem('userId') || '68372ccebb5188f5a3c44def';
 
   // Use either fetched product or fallback demo product
   const productData: Product = (product ?? fallbackProduct);
@@ -141,9 +146,14 @@ const ProductDetails: React.FC = () => {
   // Fetch wishlist to determine if this product is already favorited
   useEffect(() => {
     const checkWishlist = async () => {
-      if (!productData?._id) return;
+      if (!productData?._id || !user) return;
       try {
-        const { data } = await axios.get(`${API_URL}/wishlists/${userId}`);
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get(`${API_URL}/wishlists/${user.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const exists = (data.items || []).some((item: any) => {
           const pid = item.productId?._id ?? item.productId;
           return pid === productData._id;
@@ -156,29 +166,70 @@ const ProductDetails: React.FC = () => {
 
     checkWishlist();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productData._id]);
+  }, [productData._id, user]);
 
   // Toggle wishlist status
   const handleToggleWishlist = async () => {
+    if (!user) {
+      addToast({
+        title: 'Login Required',
+        description: 'Please log in to manage your wishlist.',
+        variant: 'error',
+        duration: 3000
+      });
+      return;
+    }
+
     if (isFavorite) {
       // Remove from wishlist
       try {
-        await axios.delete(`${API_URL}/wishlists/${userId}/${productData._id}`);
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API_URL}/wishlists/${user.id}/${productData._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setIsFavorite(false);
-        setModalMessage(`${productData.name} has been removed from your wishlist.`);
+        addToast({
+          title: 'Removed from Wishlist',
+          description: `${productData.name} has been removed from your wishlist.`,
+          variant: 'success',
+          duration: 3000
+        });
       } catch (err) {
         console.error(err);
-        setModalMessage('Failed to remove from wishlist.');
+        addToast({
+          title: 'Error',
+          description: 'Failed to remove from wishlist.',
+          variant: 'error',
+          duration: 3000
+        });
       }
     } else {
       // Add to wishlist
       try {
-        await axios.post(`${API_URL}/wishlists/${userId}`, { productId: productData._id });
+        const token = localStorage.getItem('token');
+        await axios.post(`${API_URL}/wishlists/${user.id}`, { productId: productData._id }, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         setIsFavorite(true);
-        setModalMessage(`${productData.name} has been added to your wishlist!`);
+        addToast({
+          title: 'Added to Wishlist',
+          description: `${productData.name} has been added to your wishlist!`,
+          variant: 'success',
+          duration: 3000
+        });
       } catch (err) {
         console.error(err);
-        setModalMessage('Failed to add to wishlist.');
+        addToast({
+          title: 'Error',
+          description: 'Failed to add to wishlist.',
+          variant: 'error',
+          duration: 3000
+        });
       }
     }
   };
@@ -187,8 +238,34 @@ const ProductDetails: React.FC = () => {
     setSelectedVariant(value);
   };
 
-  const handleAddToCart = () => {
-    setModalMessage(`Added ${productData.name} to cart!`);
+  const handleAddToCart = async () => {
+    if (!user) {
+      addToast({
+        title: 'Login Required',
+        description: 'Please log in to add items to your cart.',
+        variant: 'error',
+        duration: 3000
+      });
+      return;
+    }
+
+    const success = await addToCart(productData._id, 1);
+    
+    if (success) {
+      addToast({
+        title: 'Added to Cart',
+        description: `${productData.name} has been added to your cart!`,
+        variant: 'success',
+        duration: 3000
+      });
+    } else {
+      addToast({
+        title: 'Error',
+        description: 'Failed to add item to cart. Please try again.',
+        variant: 'error',
+        duration: 3000
+      });
+    }
   };
 
   const closeModal = () => {
@@ -264,8 +341,12 @@ const ProductDetails: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 mt-4">
-              <Button onClick={handleAddToCart} className="w-full md:w-auto">
-                Add to cart
+              <Button 
+                onClick={handleAddToCart} 
+                className="w-full md:w-auto" 
+                disabled={cartLoading}
+              >
+                {cartLoading ? 'Adding to Cart...' : 'Add to cart'}
               </Button>
               <button
                 onClick={handleToggleWishlist}

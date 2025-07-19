@@ -34,7 +34,7 @@ export default function Signup() {
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>("");
 
-    const { user, signup } = useAuth();
+    const { user, isLoading, signup } = useAuth();
 
     const validationSchema = Yup.object({
         name: Yup.string()
@@ -58,10 +58,11 @@ export default function Signup() {
     });
 
     useEffect(() => {
-        if(user && localStorage.getItem("token")) {
-            navigate("/product-listing");
+        // Redirect authenticated users away from signup page
+        if (!isLoading && user) {
+            navigate("/");
         }
-    }, []);
+    }, [user, isLoading, navigate]);
 
 
     const formik = useFormik({
@@ -81,13 +82,22 @@ export default function Signup() {
         console.log(values);
         try {
             await signup(name, email, password, role);
-            navigate("/product-listing");
+            navigate("/");
         } 
         catch (error : any) {
             console.error("Signup failed:", error);
             setError(error.message);
         }
 
+    }
+
+    // Show loading spinner while checking authentication
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        );
     }
 
     return (
