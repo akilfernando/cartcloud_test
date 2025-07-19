@@ -110,8 +110,7 @@ export default function Profile() {
                 return [
                     ...baseTabs,
                     { id: "store", label: "Store", icon: IoStorefrontOutline },
-                    { id: "products", label: "Products", icon: Package }, // Products tab for vendors
-                    { id: "analytics", label: "Analytics", icon: IoStatsChartOutline },
+                    { id: "products", label: "Products", icon: Package },
                 ];
             case "admin":
                 return [
@@ -997,52 +996,7 @@ export default function Profile() {
                                 </Card>
                             </TabsContent>
                         )}
-
-                        {/* Analytics Tab (Vendor Only) */}
-                        {user.role === "vendor" && (
-                            <TabsContent value="analytics" className="space-y-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Sales Analytics</CardTitle>
-                                        <CardDescription>Detailed insights into your sales performance</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                            <Card className="p-4 text-center">
-                                                <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                                                <p className="text-lg font-semibold">Total Revenue</p>
-                                                <p className="text-2xl font-bold text-gray-800">${mockSalesData.totalRevenue.toFixed(2)}</p>
-                                            </Card>
-                                            <Card className="p-4 text-center">
-                                                <ShoppingCart className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                                <p className="text-lg font-semibold">Total Orders</p>
-                                                <p className="text-2xl font-bold text-gray-800">{mockSalesData.totalOrders}</p>
-                                            </Card>
-                                            <Card className="p-4 text-center">
-                                                <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                                                <p className="text-lg font-semibold">Avg. Order Value</p>
-                                                <p className="text-2xl font-bold text-gray-800">${mockSalesData.avgOrderValue.toFixed(2)}</p>
-                                            </Card>
-                                            <Card className="p-4 text-center">
-                                                <BarChart3 className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                                                <p className="text-lg font-semibold">Conversion Rate</p>
-                                                <p className="text-2xl font-bold text-gray-800">{mockSalesData.conversionRate}%</p>
-                                            </Card>
-                                        </div>
-                                        <h3 className="text-xl font-semibold mt-6 mb-4">Top Selling Products</h3>
-                                        <div className="space-y-3">
-                                            {mockSalesData.topProducts.map((product, index) => (
-                                                <div key={index} className="flex justify-between items-center p-3 border rounded-md">
-                                                    <span className="font-medium">{product.name}</span>
-                                                    <span className="text-gray-700">{product.sales} sales (${product.revenue.toFixed(2)})</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        )}
-
+                        
                         {/* User Management Tab (Admin Only) */}
                         {user.role === "admin" && (
                             <TabsContent value="users" className="space-y-6">
