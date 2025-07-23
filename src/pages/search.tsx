@@ -41,6 +41,9 @@ const SearchPage: React.FC = () => {
     try {
       const { data } = await axios.get<Product[]>(`${API_URL}/products`, {
         params: { q: searchTerm },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       setProducts(data);
     } catch (err) {
