@@ -16,10 +16,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+enum Category {
+  All = "all",
+  Electronics = "electronics",
+  Clothing = "clothing",
+  Home = "home",
+  Beauty = "beauty",
+  Sports = "sports",
+  Toys = "toys",
+  Books = "books",
+  Other = "other"
+}
+
 interface Product {
   _id: string;
   name: string;
-  category?: string;
+  category?: Category;
   price: number;
   imageUrl: string;
   stock: number;
@@ -35,7 +47,7 @@ const SearchPage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category>(Category.All);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [inStockOnly, setInStockOnly] = useState(false);
 
@@ -72,13 +84,16 @@ const SearchPage: React.FC = () => {
   };
 
   const filteredProducts = products.filter((product) => {
-    const matchesCategory = selectedCategory
-      ? (product.category?.toLowerCase() === selectedCategory.toLowerCase())
-      : true;
+    const matchesCategory =
+      !selectedCategory || selectedCategory === Category.All
+        ? true
+        : product.category?.toLowerCase() === selectedCategory.toLowerCase();
+
     const matchesPrice = maxPrice !== null ? product.price <= maxPrice : true;
     const matchesStock = inStockOnly ? (product.stock ?? 0) > 0 : true;
     return matchesCategory && matchesPrice && matchesStock;
   });
+
 
   return (
 
@@ -100,18 +115,16 @@ const SearchPage: React.FC = () => {
               <label className="block text-sm font-medium mb-1">Category</label>
               <select
                 className="w-full border rounded px-3 py-2"
-                value={selectedCategory || ''}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value as Category)}
               >
-                <option value="">All</option>
-                <option value="electronics">Electronics</option>
-                <option value="clothing">Clothing</option>
-                <option value="home">Home</option>
-                <option value="beauty">Beauty</option>
-                <option value="sports">Sports</option>
-                <option value="toys">Toys</option>
-                <option value="books">Books</option>
+                {Object.values(Category).map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </option>
+                ))}
               </select>
+
             </div>
 
             <div>
