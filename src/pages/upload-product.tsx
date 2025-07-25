@@ -9,12 +9,31 @@ import { Textarea } from "@/components/ui/textarea";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "@/context/authContext";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
+
+enum Category {
+    Electronics = "electronics",
+    Clothing = "clothing",
+    Home = "home",
+    Beauty = "beauty",
+    Sports = "sports",
+    Toys = "toys",
+    Books = "books",
+    Other = "other"
+}
 
 const BASE_API_URL = import.meta.env.VITE_API_URL;
 
 export default function UploadProductPage() {
     const [error, setError] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null); // New state for success message
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const { user } = useAuth();
 
     const validationSchema = Yup.object({
@@ -48,7 +67,7 @@ export default function UploadProductPage() {
     });
 
     async function handleUploadProduct(values: any) {
-        // Clear previous messages
+        
         setError(null);
         setSuccessMessage(null);
 
@@ -73,14 +92,13 @@ export default function UploadProductPage() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error uploading product:", errorData);
-                setError(errorData.message || "Failed to upload product."); // Use error message from API if available
+                setError(errorData.message || "Failed to upload product.");
             } else {
                 const data = await response.json();
                 console.log("Product uploaded successfully:", data);
-                formik.resetForm(); // Reset the form fields
-                setSuccessMessage("Product uploaded successfully!"); // Set success message
+                formik.resetForm();
+                setSuccessMessage("Product uploaded successfully!");
 
-                // Clear success message after 5 seconds
                 setTimeout(() => {
                     setSuccessMessage(null);
                 }, 5000);
@@ -93,7 +111,7 @@ export default function UploadProductPage() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header page="upload-product" /> {/* Removed role prop as it's handled internally by Header */}
+            <Header page="upload-product" role="vendor"/>
             <main className="flex-grow pt-28 pb-12 px-4 max-w-xl mx-auto w-full">
                 <h1 className="text-3xl font-bold mb-8">Upload Product</h1>
                 <Card>
@@ -178,24 +196,31 @@ export default function UploadProductPage() {
                             </div>
                             <div>
                                 <Label htmlFor="productCategory">Product Category</Label>
-                                <Input
-                                    id="productCategory"
-                                    name="productCategory"
-                                    type="text"
-                                    placeholder="Enter product category"
+                                <Select
+                                    onValueChange={(value) => formik.setFieldValue("productCategory", value)}
                                     value={formik.values.productCategory}
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                />
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.values(Category).map((cat) => (
+                                            <SelectItem key={cat} value={cat}>
+                                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {formik.touched.productCategory && formik.errors.productCategory && (
-                                    <div className="text-red-500 text-xs">{formik.errors.productCategory}</div>
+                                    <div className="text-red-500 text-xs mt-1">{formik.errors.productCategory}</div>
                                 )}
                             </div>
+
                             <Button type="submit" className="w-full" disabled={formik.isSubmitting}>
                                 {formik.isSubmitting ? "Uploading..." : "Upload Product"}
                             </Button>
                             {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
-                            {successMessage && <p className="text-green-600 text-xs mt-2">{successMessage}</p>} {/* Display success message */}
+                            {successMessage && <p className="text-green-600 text-xs mt-2">{successMessage}</p>}
                         </form>
                     </CardContent>
                 </Card>
