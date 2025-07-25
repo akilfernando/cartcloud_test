@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "@/context/authContext";
+
 const BASE_API_URL = import.meta.env.VITE_API_URL;
 
 export default function UploadProductPage() {
-    const [error, setError] = useState<string | null>("");
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null); // New state for success message
     const { user } = useAuth();
 
     const validationSchema = Yup.object({
@@ -46,6 +48,10 @@ export default function UploadProductPage() {
     });
 
     async function handleUploadProduct(values: any) {
+        // Clear previous messages
+        setError(null);
+        setSuccessMessage(null);
+
         try {
             const response = await fetch(`${BASE_API_URL}/products`, {
                 method: "POST",
@@ -67,21 +73,27 @@ export default function UploadProductPage() {
             if (!response.ok) {
                 const errorData = await response.json();
                 console.error("Error uploading product:", errorData);
-                setError("Failed to upload product");
+                setError(errorData.message || "Failed to upload product."); // Use error message from API if available
             } else {
                 const data = await response.json();
                 console.log("Product uploaded successfully:", data);
-                formik.resetForm();
-                setError("");
+                formik.resetForm(); // Reset the form fields
+                setSuccessMessage("Product uploaded successfully!"); // Set success message
+
+                // Clear success message after 5 seconds
+                setTimeout(() => {
+                    setSuccessMessage(null);
+                }, 5000);
             }
-        } catch (error) {
-            setError("Failed to upload product. Please try again.");
+        } catch (err) {
+            console.error("Network or unexpected error:", err);
+            setError("Failed to upload product. Please check your connection and try again.");
         }
     }
 
     return (
         <div className="flex flex-col min-h-screen">
-            <Header page="upload-product" role="vendor" />
+            <Header page="upload-product" /> {/* Removed role prop as it's handled internally by Header */}
             <main className="flex-grow pt-28 pb-12 px-4 max-w-xl mx-auto w-full">
                 <h1 className="text-3xl font-bold mb-8">Upload Product</h1>
                 <Card>
@@ -179,10 +191,11 @@ export default function UploadProductPage() {
                                     <div className="text-red-500 text-xs">{formik.errors.productCategory}</div>
                                 )}
                             </div>
-                            <Button type="submit" className="w-full">
-                                Upload Product
+                            <Button type="submit" className="w-full" disabled={formik.isSubmitting}>
+                                {formik.isSubmitting ? "Uploading..." : "Upload Product"}
                             </Button>
-                            {error && <p className="text-red-500 text-xs">{error}</p>}
+                            {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+                            {successMessage && <p className="text-green-600 text-xs mt-2">{successMessage}</p>} {/* Display success message */}
                         </form>
                     </CardContent>
                 </Card>
