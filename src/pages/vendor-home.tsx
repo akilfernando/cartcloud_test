@@ -8,6 +8,7 @@ import {
     CategoryScale,
     LinearScale,
     BarElement,
+    BarController,
     LineElement,
     PointElement,
     Tooltip,
@@ -22,6 +23,7 @@ ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
+    BarController,
     LineElement,
     PointElement,
     Tooltip,
@@ -102,7 +104,13 @@ const VendorHomePage = () => {
                     <div className="w-[70%]  bg-white rounded-lg  overflow-hidden flex flex-col gap-6">
                         <div className="flex flex-col gap-4 w-full p-4 h-[60vh]">
                             <h1 className="text-xl font-semibold">Monthly Viewers</h1>
-                            <Chart type="bar" data={data} options={options} className="w-full h-full" />
+                            <Chart
+                              key={JSON.stringify(data) + JSON.stringify(options)}
+                              type="bar"
+                              data={data}
+                              options={options}
+                              className="w-full h-full"
+                            />
 
                         </div>
 
