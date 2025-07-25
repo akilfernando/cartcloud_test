@@ -20,6 +20,7 @@ import OrderDetails from './pages/order-details';
 import NotFound from './pages/not-found';
 import UploadProductPage from './pages/upload-product';
 import VendorProductsPage from './pages/vendor-products-page';
+import RoleBasedHome from './pages/role-based-home';
 
 function App() {
   return (
@@ -31,12 +32,12 @@ function App() {
             <Route path="/signup" element={<Signup/>}/>
             <Route path="/" element={
               <ProtectedRoute>
-                <Home/>
+                <RoleBasedHome/>
               </ProtectedRoute>
             } />
             <Route path="/home" element={
               <ProtectedRoute>
-                <Home/>
+                <RoleBasedHome/>
               </ProtectedRoute>
             } />
             <Route path="/product-details/:id" element={

@@ -76,12 +76,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
         const data = await response.json();
         localStorage.setItem("token", data.token);
-        setUser({
-            id: data.user.id,
+        const userObj = {
+            id: data.user._id || data.user.id,
             name: data.user.name ? data.user.name : "",
             email: data.user.email,
             role: data.user.role,
-        });
+        };
+        console.log("Setting user after login:", userObj);
+        setUser(userObj);
     }
 
     async function signup(name: string, email: string, password: string, role: "customer" | "vendor") {
@@ -98,13 +100,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         }
         const data = await response.json();
         localStorage.setItem("token", data.token);
-
-        setUser({
-            id: data.user.id,
+        const userObj = {
+            id: data.user._id || data.user.id,
             name: data.user.name ? data.user.name : "",
             email: data.user.email,
             role: data.user.role,
-        });
+        };
+        console.log("Setting user after signup:", userObj);
+        setUser(userObj);
     }
 
     function logout() {
