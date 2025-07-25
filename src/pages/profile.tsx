@@ -866,67 +866,120 @@ export default function Profile() {
                             </Card>
                         </TabsContent>
 
-                        {/* Orders Tab (Customer Only) */}
-                        {user.role === "customer" && (
+                        {/* Customer-specific tabs */}
+                        {user.role === 'customer' && (
                             <TabsContent value="orders" className="space-y-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Order History</CardTitle>
-                                        <CardDescription>View your past orders and their status</CardDescription>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <ShoppingCart className="h-5 w-5" />
+                                            Order History
+                                        </CardTitle>
+                                        <CardDescription>View your recent orders and their status</CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        {orderLoading ? (
-                                            <div className="flex justify-center items-center h-24">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                                                <p className="ml-3">Loading orders...</p>
-                                            </div>
-                                        ) : orderError ? (
-                                            <p className="text-red-500">{orderError}</p>
-                                        ) : orderHistory.length === 0 ? (
-                                            <p className="text-gray-600">No orders found.</p>
-                                        ) : (
-                                            <div className="space-y-4">
-                                                {orderHistory.map((order) => (
-                                                    <Card key={order._id} className="p-4">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <h4 className="font-semibold">Order #{order.orderNumber}</h4>
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                order.status.toLowerCase() === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                order.status.toLowerCase() === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                                                order.status.toLowerCase() === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                                order.status.toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                'bg-gray-100 text-gray-800'
-                                                            }`}>
-                                                                {order.status}
-                                                            </span>
+                                        <div className="space-y-4">
+                                            {orderLoading && (
+                                                <p className="text-gray-600">Loading order history...</p>
+                                            )}
+                                            {orderError && (
+                                                <p className="text-red-600">{orderError}</p>
+                                            )}
+                                            {!orderLoading && !orderError && orderHistory.length === 0 && (
+                                                <p className="text-gray-600">No orders found.</p>
+                                            )}
+                                            {!orderLoading && !orderError && orderHistory.map((order) => {
+                                                // Defensive checks
+                                                const itemsArray = Array.isArray(order.items) ? order.items : [];
+                                                // Items could be array of objects or strings
+                                                const itemNames = itemsArray.length > 0
+                                                    ? (typeof itemsArray[0] === "object"
+                                                        ? itemsArray.map((item: any) => item.name || item.title || "Unnamed Item")
+                                                        : itemsArray)
+                                                    : [];
+                                                const total = typeof order.total === "number" ? order.total : 0;
+                                                const status = order.status ? order.status.toLowerCase() : "unknown";
+                                                return (
+                                                    <div key={order._id || order.id} className="border rounded-lg p-4">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <h3 className="font-semibold">Order #{order.orderNumber || order.id || "N/A"}</h3>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-CA') : "Unknown date"}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="font-semibold">${total.toFixed(2)}</p>
+                                                                <span className={`px-2 py-1 rounded text-xs ${
+                                                                    status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                    status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                                    status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
+                                                                    status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                    'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <p className="text-sm text-gray-600">Date: {new Date(order.orderDate).toLocaleDateString()}</p>
-                                                        <p className="text-sm text-gray-600">Total: ${order.totalAmount.toFixed(2)}</p>
-                                                        <p className="text-sm text-gray-600">Payment Status: {order.paymentStatus}</p>
-                                                        <div className="mt-2 text-sm">
-                                                            Items: {order.items.map((item: any) => item.productName).join(", ")}
+                                                        <div>
+                                                            <p className="text-sm">
+                                                                Items: {itemNames.join(', ')}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500">
+                                                                {itemNames.length} item{itemNames.length !== 1 ? 's' : ''}
+                                                            </p>
                                                         </div>
-                                                        {canCancelOrder(order.status) && (
-                                                            <Button
-                                                                variant="outline"
-                                                                className="mt-4 text-red-600 hover:text-red-800"
-                                                                onClick={() => handleCancelOrder(order._id, order.orderNumber)}
-                                                                disabled={cancelLoading === order._id}
+                                                        <div className="mt-2 flex gap-2">
+                                                            <Button 
+                                                                variant="outline" 
+                                                                size="sm"
+                                                                onClick={() => navigate(`/order/${order._id || order.id}`)}
                                                             >
-                                                                {cancelLoading === order._id ? "Cancelling..." : "Cancel Order"}
+                                                                <Eye className="h-4 w-4 mr-1" />
+                                                                View Details
                                                             </Button>
-                                                        )}
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        )}
+                                                            {status === 'delivered' && (
+                                                                <Button variant="outline" size="sm">
+                                                                    Reorder
+                                                                </Button>
+                                                            )}
+                                                            {order.trackingNumber && (
+                                                                <Button variant="outline" size="sm">
+                                                                    Track Order
+                                                                </Button>
+                                                            )}
+                                                            {canCancelOrder(status) && (
+                                                                <Button 
+                                                                    variant="destructive" 
+                                                                    size="sm"
+                                                                    onClick={() => handleCancelOrder(order._id || order.id, order.orderNumber || order.id)}
+                                                                    disabled={cancelLoading === (order._id || order.id)}
+                                                                    className="flex items-center gap-1"
+                                                                >
+                                                                    {cancelLoading === (order._id || order.id) ? (
+                                                                        <>
+                                                                            <Clock className="h-3 w-3 animate-spin" />
+                                                                            Cancelling...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <XCircle className="h-3 w-3" />
+                                                                            Cancel
+                                                                        </>
+                                                                    )}
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
                         )}
-
-                        {/* Account Balance Tab (Customer Only) */}
-                        {user.role === "customer" && (
+                        {user.role === 'customer' && (
                             <TabsContent value="balance" className="space-y-6">
                                 <Card>
                                     <CardHeader>
@@ -943,7 +996,7 @@ export default function Profile() {
                                             <p className="text-red-500">{balanceError}</p>
                                         ) : (
                                             <div className="space-y-4">
-                                                <p className="text-2xl font-bold">Current Balance: ${accountBalance?.balance?.toFixed(2) || '0.00'}</p>
+                                                <p className="text-2xl font-bold">Current Balance: ${accountBalance?.totalOwed?.toFixed(2) || '0.00'}</p>
                                                 {/* You can add transaction history here if available in accountBalance */}
                                             </div>
                                         )}
@@ -952,7 +1005,7 @@ export default function Profile() {
                             </TabsContent>
                         )}
 
-                        {/* Store Tab (Vendor Only) */}
+                        {/* Vendor-specific tabs */}
                         {user.role === "vendor" && (
                             <TabsContent value="store" className="space-y-6">
                                 <Card>
@@ -984,8 +1037,6 @@ export default function Profile() {
                                 </Card>
                             </TabsContent>
                         )}
-
-                        {/* Products Tab (Vendor Only) */}
                         {user.role === "vendor" && (
                             <TabsContent value="products" className="space-y-6">
                                 <Card>

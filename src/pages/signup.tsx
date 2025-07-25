@@ -60,7 +60,12 @@ export default function Signup() {
     useEffect(() => {
         // Redirect authenticated users away from signup page
         if (!isLoading && user) {
-            navigate("/");
+            console.log("user role in signup", user.role);
+            if (user.role === "vendor") {
+                navigate("/vendor-home");
+            } else {
+                navigate("/");
+            }
         }
     }, [user, isLoading, navigate]);
 
@@ -82,7 +87,14 @@ export default function Signup() {
         console.log(values);
         try {
             await signup(name, email, password, role);
-            navigate("/");
+            console.log("Signup successful");
+            console.log(role);
+            if (role === "vendor") {
+                navigate("/vendor-home");
+            } else {
+                console.log("customer");
+                navigate("/");
+            }
         } 
         catch (error : any) {
             console.error("Signup failed:", error);
