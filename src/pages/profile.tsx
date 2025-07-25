@@ -786,80 +786,92 @@ export default function Profile() {
                                                 {!orderLoading && !orderError && orderHistory.length === 0 && (
                                                     <p className="text-gray-600">No orders found.</p>
                                                 )}
-                                                {!orderLoading && !orderError && orderHistory.map((order) => (
-                                                    <div key={order._id} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-start mb-2">
+                                                {!orderLoading && !orderError && orderHistory.map((order) => {
+                                                    // Defensive checks
+                                                    const itemsArray = Array.isArray(order.items) ? order.items : [];
+                                                    // Items could be array of objects or strings
+                                                    const itemNames = itemsArray.length > 0
+                                                        ? (typeof itemsArray[0] === "object"
+                                                            ? itemsArray.map((item: any) => item.name || item.title || "Unnamed Item")
+                                                            : itemsArray)
+                                                        : [];
+                                                    const total = typeof order.total === "number" ? order.total : 0;
+                                                    const status = order.status ? order.status.toLowerCase() : "unknown";
+                                                    return (
+                                                        <div key={order._id || order.id} className="border rounded-lg p-4">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div>
+                                                                    <h3 className="font-semibold">Order #{order.orderNumber || order.id || "N/A"}</h3>
+                                                                    <p className="text-sm text-gray-600">
+                                                                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-CA') : "Unknown date"}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="font-semibold">${total.toFixed(2)}</p>
+                                                                    <span className={`px-2 py-1 rounded text-xs ${
+                                                                        status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                                                        status === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                                                                        status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+                                                                        status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
+                                                                        status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                                                        'bg-gray-100 text-gray-800'
+                                                                    }`}>
+                                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                             <div>
-                                                                <h3 className="font-semibold">Order #{order.orderNumber}</h3>
-                                                                <p className="text-sm text-gray-600">
-                                                                    {new Date(order.createdAt).toLocaleDateString('en-CA')}
+                                                                <p className="text-sm">
+                                                                    Items: {itemNames.join(', ')}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500">
+                                                                    {itemNames.length} item{itemNames.length !== 1 ? 's' : ''}
                                                                 </p>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <p className="font-semibold">${order.total.toFixed(2)}</p>
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                                                    order.status === 'shipped' ? 'bg-blue-100 text-blue-800' :
-                                                                    order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    order.status === 'confirmed' ? 'bg-purple-100 text-purple-800' :
-                                                                    order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-gray-100 text-gray-800'
-                                                                }`}>
-                                                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                                                </span>
+                                                            <div className="mt-2 flex gap-2">
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm"
+                                                                    onClick={() => navigate(`/order/${order._id || order.id}`)}
+                                                                >
+                                                                    <Eye className="h-4 w-4 mr-1" />
+                                                                    View Details
+                                                                </Button>
+                                                                {status === 'delivered' && (
+                                                                    <Button variant="outline" size="sm">
+                                                                        Reorder
+                                                                    </Button>
+                                                                )}
+                                                                {order.trackingNumber && (
+                                                                    <Button variant="outline" size="sm">
+                                                                        Track Order
+                                                                    </Button>
+                                                                )}
+                                                                {canCancelOrder(status) && (
+                                                                    <Button 
+                                                                        variant="destructive" 
+                                                                        size="sm"
+                                                                        onClick={() => handleCancelOrder(order._id || order.id, order.orderNumber || order.id)}
+                                                                        disabled={cancelLoading === (order._id || order.id)}
+                                                                        className="flex items-center gap-1"
+                                                                    >
+                                                                        {cancelLoading === (order._id || order.id) ? (
+                                                                            <>
+                                                                                <Clock className="h-3 w-3 animate-spin" />
+                                                                                Cancelling...
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <XCircle className="h-3 w-3" />
+                                                                                Cancel
+                                                                            </>
+                                                                        )}
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-sm">
-                                                                Items: {order.items.map((item: any) => item.name).join(', ')}
-                                                            </p>
-                                                            <p className="text-sm text-gray-500">
-                                                                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                                                            </p>
-                                                        </div>
-                                                        <div className="mt-2 flex gap-2">
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm"
-                                                                onClick={() => navigate(`/order/${order._id}`)}
-                                                            >
-                                                                <Eye className="h-4 w-4 mr-1" />
-                                                                View Details
-                                                            </Button>
-                                                            {order.status === 'delivered' && (
-                                                                <Button variant="outline" size="sm">
-                                                                    Reorder
-                                                                </Button>
-                                                            )}
-                                                            {order.trackingNumber && (
-                                                                <Button variant="outline" size="sm">
-                                                                    Track Order
-                                                                </Button>
-                                                            )}
-                                                            {canCancelOrder(order.status) && (
-                                                                <Button 
-                                                                    variant="destructive" 
-                                                                    size="sm"
-                                                                    onClick={() => handleCancelOrder(order._id, order.orderNumber)}
-                                                                    disabled={cancelLoading === order._id}
-                                                                    className="flex items-center gap-1"
-                                                                >
-                                                                    {cancelLoading === order._id ? (
-                                                                        <>
-                                                                            <Clock className="h-3 w-3 animate-spin" />
-                                                                            Cancelling...
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <XCircle className="h-3 w-3" />
-                                                                            Cancel
-                                                                        </>
-                                                                    )}
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </CardContent>
                                     </Card>
