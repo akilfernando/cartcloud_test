@@ -75,6 +75,8 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState("profile");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [role, setRole] = useState<string>("");
+    const [savingRole, setSavingRole] = useState(false);
 
     // State for Customer Orders
     const [orderHistory, setOrderHistory] = useState<any[]>([]);
@@ -151,7 +153,7 @@ export default function Profile() {
             setUser(null);
 
             if (!userId) {
-                setError("User not authenticated. Please log in to view your profile.");
+                setError(isAdminEditing ? `User not authenticated. Please log in to view ${user?.name}'s profile.` : "User not authenticated. Please log in to view your profile.");
                 setLoading(false);
                 return;
             }
@@ -166,6 +168,7 @@ export default function Profile() {
                 });
                 console.log("Response:", response.data);
                 setUser(response.data);
+                setRole(response.data.role);
             } catch (err: any) {
                 if (axios.isAxiosError(err) && err.response) {
                     if (err.response.status === 404) {
@@ -423,7 +426,7 @@ export default function Profile() {
             // Show success toast
             addToast({
                 title: "Profile Updated",
-                description: "Your profile information has been successfully updated.",
+                description: isAdminEditing ? `${user.name}'s profile information has been successfully updated.` : "Your profile information has been successfully updated.",
                 variant: "success",
                 duration: 3000
             });
@@ -520,7 +523,7 @@ export default function Profile() {
             // Show success toast notification
             addToast({
                 title: "Password Updated",
-                description: "Your password has been successfully updated.",
+                description: isAdminEditing ? `${user.name}'s password has been successfully updated.` : "Your password has been successfully updated.",
                 variant: "success",
                 duration: 4000
             });
@@ -577,14 +580,21 @@ export default function Profile() {
         });
     };
 
-    const handleRoleChange = (value: string) => {
-        setUser((prevUser: any) => {
-            if (!prevUser) return null;
-            return {
-                ...prevUser,
-                role: value,
-            };
-        });
+    // Admin role change handler
+    const handleRoleChange = (val: string) => setRole(val);
+    const handleSaveRole = async () => {
+        setSavingRole(true);
+        try {
+            await axios.put(`${BASE_API_URL}/users/${userId}`, { role }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+            setUser((u: any) => ({ ...u, role }));
+            addToast({ title: "Role updated", variant: "success" });
+        } catch (err: any) {
+            addToast({ title: "Error updating role", description: err.message, variant: "error" });
+        } finally {
+            setSavingRole(false);
+        }
     };
 
     const handleCheckboxChange = (checked: boolean) => {
@@ -646,6 +656,9 @@ export default function Profile() {
 
     const tabs = getTabsForRole(user.role);
 
+    // Show admin controls if logged-in user is admin and viewing another user's profile
+    const isAdminEditing = authUser && authUser.role === "admin" && user && authUser.id !== user._id;
+
     return (
         <div className="flex flex-col min-h-screen">
             <Header page="profile" /> {/* role prop is now determined internally by Header */}
@@ -654,10 +667,23 @@ export default function Profile() {
                     <div className="flex items-center mb-6">
                         <IoPersonOutline className="text-3xl mr-3" />
                         <div>
-                            <h1 className="text-3xl font-bold">{user.name}</h1>
-                            <p className="text-gray-600 capitalize">{user.role} Dashboard</p>
+                            <h1 className="text-3xl font-bold">
+                                {user.name}
+                                {isAdminEditing && <span className="ml-2 text-lg text-blue-600">(Admin View)</span>}
+                            </h1>
+                            <p className="text-gray-600 capitalize">
+                                {isAdminEditing
+                                    ? `You are viewing and managing ${user.name}'s profile as an admin.`
+                                    : `${user.role} Dashboard`}
+                            </p>
                         </div>
                     </div>
+
+                    {isAdminEditing && (
+                        <Button variant="outline" className="mb-4" onClick={() => navigate(-1)}>
+                            Back
+                        </Button>
+                    )}
 
                     <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                         <div className="flex justify-center mb-6">
@@ -676,7 +702,9 @@ export default function Profile() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Profile Information</CardTitle>
-                                    <CardDescription>Manage your personal information and preferences</CardDescription>
+                                    <CardDescription>
+                                        {isAdminEditing ? `Manage ${user.name}'s personal information and preferences` : 'Manage your personal information and preferences'}
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -703,7 +731,7 @@ export default function Profile() {
 
                                     <div className="space-y-2">
                                         <Label htmlFor="role">Account Type</Label>
-                                        <Select value={user.role} onValueChange={handleRoleChange} disabled>
+                                        <Select value={user.role} onValueChange={handleRoleChange} disabled={!isAdminEditing}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a role" />
                                             </SelectTrigger>
@@ -713,6 +741,9 @@ export default function Profile() {
                                                 <SelectItem value="admin">Admin</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        {isAdminEditing && (
+                                            <Button size="sm" onClick={handleSaveRole} disabled={savingRole} className="ml-2 mt-2">Save</Button>
+                                        )}
                                     </div>
 
                                     {/* Address Section */}
@@ -834,7 +865,9 @@ export default function Profile() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Security Settings</CardTitle>
-                                    <CardDescription>Update your password</CardDescription>
+                                    <CardDescription>
+                                        {isAdminEditing ? `Update ${user.name}'s password` : 'Update your password'}
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
@@ -875,7 +908,9 @@ export default function Profile() {
                                             <ShoppingCart className="h-5 w-5" />
                                             Order History
                                         </CardTitle>
-                                        <CardDescription>View your recent orders and their status</CardDescription>
+                                        <CardDescription>
+                                            {isAdminEditing ? `View ${user.name}'s recent orders and their status` : 'View your recent orders and their status'}
+                                        </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="space-y-4">
@@ -984,7 +1019,9 @@ export default function Profile() {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Account Balance</CardTitle>
-                                        <CardDescription>View your current account balance and transaction history</CardDescription>
+                                        <CardDescription>
+                                            {isAdminEditing ? `View ${user.name}'s current account balance and transaction history` : 'View your current account balance and transaction history'}
+                                        </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {balanceLoading ? (
@@ -1011,7 +1048,9 @@ export default function Profile() {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>Store Overview</CardTitle>
-                                        <CardDescription>Summary of your store's performance</CardDescription>
+                                        <CardDescription>
+                                            {isAdminEditing ? `Summary of ${user.name}'s store performance` : `Summary of your store's performance`}
+                                        </CardDescription>
                                     </CardHeader>
                                     <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <Card className="p-4 flex flex-col items-center justify-center text-center">
@@ -1041,8 +1080,12 @@ export default function Profile() {
                             <TabsContent value="products" className="space-y-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>Your Products</CardTitle>
-                                        <CardDescription>The products listed on your store</CardDescription>
+                                        <CardTitle>{isAdminEditing ? `${user.name}'s Products` : 'Your Products'}</CardTitle>
+                                        <CardDescription>
+                                            {isAdminEditing
+                                                ? `The products listed on ${user.name}'s store` 
+                                                : 'The products listed on your store'}
+                                        </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {vendorProductsLoading ? (
@@ -1053,7 +1096,11 @@ export default function Profile() {
                                         ) : vendorProductsError ? (
                                             <p className="text-red-500">{vendorProductsError}</p>
                                         ) : vendorProducts.length === 0 ? (
-                                            <p className="text-gray-600">You have not listed any products yet.</p>
+                                            <p className="text-gray-600">
+                                                {isAdminEditing
+                                                    ? `${user.name} has not listed any products yet.`
+                                                    : 'You have not listed any products yet.'}
+                                            </p>
                                         ) : (
                                             <div className="overflow-x-auto"> {/* Added overflow for small screens */}
                                                 <table className="min-w-full divide-y divide-gray-200">

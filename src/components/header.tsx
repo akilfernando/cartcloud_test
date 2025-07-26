@@ -2,6 +2,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList } from "./ui/navigation-menu";
 import { useAuth } from "@/context/authContext";
 import { useCart } from "@/context/cartContext";
+import AdminNav from "@/components/header/AdminNav";
+import CustomerNav from "@/components/header/CustomerNav";
+import VendorNav from "@/components/header/VendorNav";
 
 interface HeaderProps {
     page: "login" | "signup" | "home" | "shop" | "products" | "product-details" | "search" | "vendor-home" | "contact" | "about" | "profile" | "cart" | "checkout" | "wishlist" | "upload-product" | "vendor-products";
@@ -13,9 +16,7 @@ export default function Header({ page }: HeaderProps) {
     const { user, logout } = useAuth();
     const { getCartItemCount } = useCart();
     const navigate = useNavigate();
-
     const currentUserRole = user?.role || "customer";
-
     const cartItemCount = getCartItemCount();
 
     const getPageDisplayName = (currentPage: string) => {
@@ -43,7 +44,7 @@ export default function Header({ page }: HeaderProps) {
     return (
         <div className="w-full fixed top-0 bg-white shadow-sm z-50">
             <header className="w-full py-4 text-gray-800 flex items-center justify-between px-6 md:px-12">
-                {/* Left side - Logo */}
+                {/* Logo */}
                 <div className="flex items-center">
                     <NavigationMenu>
                         <NavigationMenuList>
@@ -62,128 +63,16 @@ export default function Header({ page }: HeaderProps) {
                     </NavigationMenu>
                 </div>
 
-                {/* Center - Navigation Links (Conditional based on role) */}
+                {/* Navigation by role */}
                 {!isAuthPage && (
                     <>
-                        {/* Navigation for Customer Role */}
-                        {currentUserRole === "customer" && (
-                            <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
-                                <NavigationMenu>
-                                    <NavigationMenuList className="flex space-x-8">
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/home"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "home"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Home
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/products"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "products" || page === "shop"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Shop
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/about"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "about"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                About
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/contact"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "contact"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Contact
-                                            </Link>
-                                        </NavigationMenuItem>
-                                    </NavigationMenuList>
-                                </NavigationMenu>
-                            </div>
-                        )}
-
-                        {/* Navigation for Vendor Role */}
-                        {currentUserRole === "vendor" && (
-                            <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
-                                <NavigationMenu>
-                                    <NavigationMenuList className="flex space-x-8">
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/vendor-home"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "vendor-home"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Dashboard
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/vendor-products"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "vendor-products"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Your Store
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/about"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "about"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                About
-                                            </Link>
-                                        </NavigationMenuItem>
-                                        <NavigationMenuItem>
-                                            <Link
-                                                to="/contact"
-                                                className={`text-gray-700 hover:text-gray-900 font-medium transition-colors pb-2 border-b-2 ${
-                                                    page === "contact"
-                                                        ? "text-gray-900 font-semibold border-gray-800"
-                                                        : "border-transparent hover:border-gray-300"
-                                                }`}
-                                            >
-                                                Contact
-                                            </Link>
-                                        </NavigationMenuItem>
-                                    </NavigationMenuList>
-                                </NavigationMenu>
-                            </div>
-                        )}
+                        {currentUserRole === "admin" && <AdminNav page={page} />}
+                        {currentUserRole === "customer" && <CustomerNav page={page} />}
+                        {currentUserRole === "vendor" && <VendorNav page={page} />}
                     </>
                 )}
 
-                {/* Right side - User actions (Conditional based on role and auth status) */}
+                {/* User actions (profile/logout) remain unchanged */}
                 {!isAuthPage && (
                     <div className="flex items-center space-x-4">
                         {/* Icons for Customer Role */}

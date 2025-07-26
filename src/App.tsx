@@ -80,6 +80,11 @@ function App() {
                 <Profile/>
               </ProtectedRoute>
             } />
+            <Route path="/profile/:userId" element={
+              <ProtectedRoute>
+                <Profile/>
+              </ProtectedRoute>
+            } />
             <Route path="/wishlist" element={
               <ProtectedRoute>
                 <Wishlist/>
