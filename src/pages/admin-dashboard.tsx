@@ -74,7 +74,8 @@ const AdminDashboard: React.FC = () => {
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [selectedVendor, setSelectedVendor] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [productSearch, setProductSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderUsers, setOrderUsers] = useState<User[]>([]);
@@ -269,12 +270,19 @@ const AdminDashboard: React.FC = () => {
       u.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Filter products by vendor and search
+  // Filter products by category, status, and search
   const filteredProducts = products.filter(
     (p) =>
-      (selectedVendor === "all" || !selectedVendor || p.vendorId === selectedVendor) &&
+      (selectedCategory === "all" || p.category.toLowerCase() === selectedCategory.toLowerCase()) &&
+      (selectedStatus === "all" || 
+        (selectedStatus === "active" && p.isActive) || 
+        (selectedStatus === "inactive" && !p.isActive)
+      ) &&
       p.name.toLowerCase().includes(productSearch.toLowerCase())
   );
+
+  // Get unique categories from products
+  const uniqueCategories = [...new Set(products.map(p => p.category))].filter(Boolean);
 
   // Filter orders by user and search
   const filteredOrders = orders.filter(
@@ -681,6 +689,29 @@ const AdminDashboard: React.FC = () => {
                     onChange={e => setProductSearch(e.target.value)}
                     className="w-48"
                   />
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {uniqueCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button onClick={handleCreateProduct}>Create Product</Button>
                 </div>
               </CardHeader>
