@@ -53,6 +53,7 @@ interface Order {
   orderNumber: string;
   userId: string;
   status: string;
+  paymentStatus?: string;
   total: number;
   createdAt: string;
   items: any[];
@@ -103,6 +104,18 @@ const AdminDashboard: React.FC = () => {
     isActive: true 
   });
   const [productFormLoading, setProductFormLoading] = useState(false);
+  
+  // Order management state
+  const [editOrder, setEditOrder] = useState<Order | null>(null);
+  const [deleteOrder, setDeleteOrder] = useState<Order | null>(null);
+  const [showEditOrderDialog, setShowEditOrderDialog] = useState(false);
+  const [showDeleteOrderDialog, setShowDeleteOrderDialog] = useState(false);
+  const [orderForm, setOrderForm] = useState({ 
+    status: "", 
+    paymentStatus: "",
+    total: ""
+  });
+  const [orderFormLoading, setOrderFormLoading] = useState(false);
   
   const navigate = useNavigate();
 
@@ -188,7 +201,6 @@ const AdminDashboard: React.FC = () => {
   // Fetch all orders
   const fetchOrders = async () => {
     try {
-      // This assumes you have an endpoint to get all orders for admin
       const res = await axios.get(import.meta.env.VITE_API_URL + "/orders", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -368,19 +380,37 @@ const AdminDashboard: React.FC = () => {
 
   // Product management handlers
   const handleEditProduct = (product: Product) => {
+    if (!product) {
+      addToast({
+        title: "Error",
+        description: "Product data is missing",
+        variant: "error",
+      });
+      return;
+    }
+    
     setEditProduct(product);
     setProductForm({ 
-      name: product.name || "", 
-      price: (product.price || 0).toString(), 
-      stock: (product.stock || 0).toString(), 
-      category: product.category || "", 
-      description: product.description || "",
-      isActive: product.isActive !== undefined ? product.isActive : true 
+      name: product?.name || "", 
+      price: (product?.price || 0).toString(), 
+      stock: (product?.stock || 0).toString(), 
+      category: product?.category || "", 
+      description: product?.description || "",
+      isActive: product?.isActive !== undefined ? product.isActive : true 
     });
     setShowEditProductDialog(true);
   };
 
   const handleDeleteProduct = (product: Product) => {
+    if (!product) {
+      addToast({
+        title: "Error",
+        description: "Product data is missing",
+        variant: "error",
+      });
+      return;
+    }
+    
     setDeleteProduct(product);
     setShowDeleteProductDialog(true);
   };
@@ -465,6 +495,84 @@ const AdminDashboard: React.FC = () => {
       addToast({ title: "Error creating product", description: err.response?.data?.message || err.message, variant: "error" });
     } finally {
       setProductFormLoading(false);
+    }
+  };
+
+  // Order management handlers
+  const handleEditOrder = (order: Order) => {
+    if (!order) {
+      addToast({
+        title: "Error",
+        description: "Order data is missing",
+        variant: "error",
+      });
+      return;
+    }
+    
+    setEditOrder(order);
+    setOrderForm({ 
+      status: order?.status || "", 
+      paymentStatus: order?.paymentStatus || "",
+      total: order?.total?.toString() || ""
+    });
+    setShowEditOrderDialog(true);
+  };
+
+  const handleDeleteOrder = (order: Order) => {
+    if (!order) {
+      addToast({
+        title: "Error",
+        description: "Order data is missing",
+        variant: "error",
+      });
+      return;
+    }
+    
+    setDeleteOrder(order);
+    setShowDeleteOrderDialog(true);
+  };
+
+  const submitEditOrder = async () => {
+    if (!editOrder) return;
+    setOrderFormLoading(true);
+    try {
+      await axios.patch(import.meta.env.VITE_API_URL + `/orders/${editOrder._id}/deliver`, {
+        status: orderForm.status,
+        paymentStatus: orderForm.paymentStatus,
+        total: parseFloat(orderForm.total),
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      addToast({ title: "Order updated", variant: "success" });
+      setShowEditOrderDialog(false);
+      fetchOrders();
+    } catch (err: any) {
+      addToast({ title: "Error updating order", description: err.response?.data?.message || err.message, variant: "error" });
+    } finally {
+      setOrderFormLoading(false);
+    }
+  };
+
+  const submitDeleteOrder = async () => {
+    if (!deleteOrder) return;
+    setOrderFormLoading(true);
+    try {
+      await axios.patch(import.meta.env.VITE_API_URL + `/orders/${deleteOrder._id}/cancel`, {
+        reason: "Admin cancelled order"
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      addToast({ title: "Order cancelled", variant: "success" });
+      setShowDeleteOrderDialog(false);
+      fetchOrders();
+    } catch (err: any) {
+      addToast({ title: "Error cancelling order", description: err.response?.data?.message || err.message, variant: "error" });
+    } finally {
+      setOrderFormLoading(false);
     }
   };
 
@@ -792,6 +900,7 @@ const AdminDashboard: React.FC = () => {
                         <th className="border px-2 py-1">Status</th>
                         <th className="border px-2 py-1">Created</th>
                         <th className="border px-2 py-1">Items</th>
+                        <th className="border px-2 py-1">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -805,6 +914,10 @@ const AdminDashboard: React.FC = () => {
                             <td className="border px-2 py-1">{order.status}</td>
                             <td className="border px-2 py-1">{new Date(order.createdAt).toLocaleString()}</td>
                             <td className="border px-2 py-1">{order.items.length}</td>
+                            <td className="border px-2 py-1 space-x-2">
+                              <Button size="sm" variant="outline" onClick={() => handleEditOrder(order)}>Edit</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteOrder(order)}>Cancel</Button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -984,6 +1097,79 @@ const AdminDashboard: React.FC = () => {
                 </DialogClose>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Order Dialog */}
+        <Dialog open={showEditOrderDialog} onOpenChange={setShowEditOrderDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Order</DialogTitle>
+              <DialogDescription>Update order status and details.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); submitEditOrder(); }}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="order-status">Status</Label>
+                  <Select value={orderForm.status} onValueChange={val => setOrderForm(f => ({ ...f, status: val }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="order-payment-status">Payment Status</Label>
+                  <Select value={orderForm.paymentStatus} onValueChange={val => setOrderForm(f => ({ ...f, paymentStatus: val }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="order-total">Total</Label>
+                  <Input 
+                    id="order-total" 
+                    type="number" 
+                    step="0.01" 
+                    value={orderForm.total} 
+                    onChange={e => setOrderForm(f => ({ ...f, total: e.target.value }))} 
+                    required 
+                  />
+                </div>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button type="submit" disabled={orderFormLoading}>Save</Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancel</Button>
+                </DialogClose>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Order Dialog */}
+        <Dialog open={showDeleteOrderDialog} onOpenChange={setShowDeleteOrderDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancel Order</DialogTitle>
+              <DialogDescription>Are you sure you want to cancel this order? This action cannot be undone.</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="destructive" onClick={submitDeleteOrder} disabled={orderFormLoading}>Cancel Order</Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Keep Order</Button>
+              </DialogClose>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </main>
