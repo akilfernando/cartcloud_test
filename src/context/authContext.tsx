@@ -29,28 +29,88 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Handle token expiration
+    const handleTokenExpired = () => {
+        setUser(null);
+        localStorage.removeItem("token");
+    };
+
+    // Periodic token validation
+    useEffect(() => {
+        const validateTokenPeriodically = async () => {
+            const token = localStorage.getItem("token");
+            if (token && user) {
+                try {
+                    await validateToken(token);
+                } catch (e) {
+                    console.log('Periodic token validation failed:', e);
+                    handleTokenExpired();
+                }
+            }
+        };
+
+        // Validate token every 5 minutes
+        const interval = setInterval(validateTokenPeriodically, 5 * 60 * 1000);
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [user]);
+
+    useEffect(() => {
+        // Listen for token expiration events
+        window.addEventListener('tokenExpired', handleTokenExpired);
+        
+        return () => {
+            window.removeEventListener('tokenExpired', handleTokenExpired);
+        };
+    }, []);
+
+    // Function to validate token
+    const validateToken = async (token: string) => {
+        try {
+            const decoded: any = jwtDecode(token);
+            
+            // Check if token is expired
+            const currentTime = Date.now() / 1000;
+            if (decoded.exp && decoded.exp < currentTime) {
+                throw new Error('Token has expired');
+            }
+            
+            const response = await fetch(BASE_API_URL + "/users/" + decoded.id, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Token validation failed');
+            }
+            
+            const data = await response.json();
+            return {
+                id: data._id || data.id,
+                name: data.name,
+                email: data.email,
+                role: data.role,
+            };
+        } catch (e) {
+            throw e;
+        }
+    };
+
     useEffect(() => {
         (async () => {
             const token = localStorage.getItem("token");
             if (token) {
                 try {
-                    const decoded: any = jwtDecode(token);
-                    const response = await fetch(BASE_API_URL + "/users/" + decoded.id, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json"
-                        }
-                    });
-                    const data = await response.json();
-                    setUser({
-                        id: data._id || data.id,
-                        name: data.name,
-                        email: data.email,
-                        role: data.role,
-                    });
+                    const userData = await validateToken(token);
+                    setUser(userData);
                 } 
                 catch (e) {
+                    console.log('Token validation failed:', e);
                     setUser(null);
                     // Clear invalid token
                     localStorage.removeItem("token");

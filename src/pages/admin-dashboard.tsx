@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
-import axios from "axios";
+import api from "@/lib/axios";
 import { useNavigate } from "react-router-dom";
 
 interface User {
@@ -124,11 +124,7 @@ const AdminDashboard: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(import.meta.env.VITE_API_URL + "/users", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/users");
       console.log('Users fetched:', res.data);
       setUsers(res.data);
     } catch (err: any) {
@@ -146,11 +142,7 @@ const AdminDashboard: React.FC = () => {
   // Fetch vendors
   const fetchVendors = async () => {
     try {
-      const res = await axios.get(import.meta.env.VITE_API_URL + "/users", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/users");
       // Only vendors
       setVendors(res.data.filter((u: Vendor) => u.role === "vendor"));
     } catch (err: any) {
@@ -165,11 +157,7 @@ const AdminDashboard: React.FC = () => {
   // Fetch products
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(import.meta.env.VITE_API_URL + "/products", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/products");
       setProducts(res.data);
     } catch (err: any) {
       addToast({
@@ -183,11 +171,7 @@ const AdminDashboard: React.FC = () => {
   // Fetch users for order filtering
   const fetchOrderUsers = async () => {
     try {
-      const res = await axios.get(import.meta.env.VITE_API_URL + "/users", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/users");
       setOrderUsers(res.data);
     } catch (err: any) {
       addToast({
@@ -201,11 +185,7 @@ const AdminDashboard: React.FC = () => {
   // Fetch all orders
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(import.meta.env.VITE_API_URL + "/orders", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const res = await api.get("/orders");
       setOrders(res.data);
     } catch (err: any) {
       addToast({
@@ -226,21 +206,15 @@ const AdminDashboard: React.FC = () => {
     setUserLoading(true);
     try {
       // Fetch user details
-      const userRes = await axios.get(import.meta.env.VITE_API_URL + `/users/${user._id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const userRes = await api.get(`/users/${user._id}`);
       setUserDetails(userRes.data);
       if (user.role === "vendor") {
         // Fetch vendor's products
-        const prodRes = await axios.get(import.meta.env.VITE_API_URL + `/products`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const prodRes = await api.get(`/products`);
         setUserProducts(prodRes.data.filter((p: Product) => p.vendorId === user._id));
       } else if (user.role === "customer") {
         // Fetch user's orders
-        const orderRes = await axios.get(import.meta.env.VITE_API_URL + `/orders/user/${user._id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const orderRes = await api.get(`/orders/user/${user._id}`);
         setUserOrders(orderRes.data);
       }
     } catch (err: any) {
@@ -322,14 +296,10 @@ const AdminDashboard: React.FC = () => {
     if (!editUser) return;
     setFormLoading(true);
     try {
-      await axios.put(`/api/users/${editUser._id}`, {
+      await api.put(`/users/${editUser._id}`, {
         name: form.name,
         email: form.email,
         role: form.role,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
       addToast({ title: "User updated", variant: "success" });
       setShowEditDialog(false);
@@ -345,11 +315,7 @@ const AdminDashboard: React.FC = () => {
     if (!deleteUser) return;
     setFormLoading(true);
     try {
-      await axios.delete(`/api/users/${deleteUser._id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await api.delete(`/users/${deleteUser._id}`);
       addToast({ title: "User deleted", variant: "success" });
       setShowDeleteDialog(false);
       fetchCustomers();
@@ -363,11 +329,7 @@ const AdminDashboard: React.FC = () => {
   const submitCreate = async () => {
     setFormLoading(true);
     try {
-      await axios.post(`/api/users`, form, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await api.post(`/users`, form);
       addToast({ title: "User created", variant: "success" });
       setShowCreateDialog(false);
       fetchCustomers();
@@ -431,17 +393,13 @@ const AdminDashboard: React.FC = () => {
     if (!editProduct) return;
     setProductFormLoading(true);
     try {
-      await axios.put(import.meta.env.VITE_API_URL + `/products/${editProduct._id}`, {
+      await api.put(`/products/${editProduct._id}`, {
         name: productForm.name,
         price: parseFloat(productForm.price),
         stock: parseInt(productForm.stock),
         category: productForm.category,
         description: productForm.description,
         isActive: productForm.isActive,
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
       addToast({ title: "Product updated", variant: "success" });
       setShowEditProductDialog(false);
@@ -457,11 +415,7 @@ const AdminDashboard: React.FC = () => {
     if (!deleteProduct) return;
     setProductFormLoading(true);
     try {
-      await axios.delete(import.meta.env.VITE_API_URL + `/products/${deleteProduct._id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await api.delete(`/products/${deleteProduct._id}`);
       addToast({ title: "Product deleted", variant: "success" });
       setShowDeleteProductDialog(false);
       fetchProducts();
@@ -475,7 +429,7 @@ const AdminDashboard: React.FC = () => {
   const submitCreateProduct = async () => {
     setProductFormLoading(true);
     try {
-      await axios.post(import.meta.env.VITE_API_URL + `/products`, {
+      await api.post(`/products`, {
         name: productForm.name,
         price: parseFloat(productForm.price),
         stock: parseInt(productForm.stock),
@@ -483,10 +437,6 @@ const AdminDashboard: React.FC = () => {
         description: productForm.description,
         isActive: productForm.isActive,
         vendorId: localStorage.getItem("userId"), // This will be the admin's ID
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
       addToast({ title: "Product created", variant: "success" });
       setShowCreateProductDialog(false);
@@ -536,14 +486,10 @@ const AdminDashboard: React.FC = () => {
     if (!editOrder) return;
     setOrderFormLoading(true);
     try {
-      await axios.patch(import.meta.env.VITE_API_URL + `/orders/${editOrder._id}/deliver`, {
+      await api.patch(`/orders/${editOrder._id}/deliver`, {
         status: orderForm.status,
         paymentStatus: orderForm.paymentStatus,
         total: parseFloat(orderForm.total),
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
       addToast({ title: "Order updated", variant: "success" });
       setShowEditOrderDialog(false);
@@ -559,12 +505,8 @@ const AdminDashboard: React.FC = () => {
     if (!deleteOrder) return;
     setOrderFormLoading(true);
     try {
-      await axios.patch(import.meta.env.VITE_API_URL + `/orders/${deleteOrder._id}/cancel`, {
+      await api.patch(`/orders/${deleteOrder._id}/cancel`, {
         reason: "Admin cancelled order"
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
       });
       addToast({ title: "Order cancelled", variant: "success" });
       setShowDeleteOrderDialog(false);
