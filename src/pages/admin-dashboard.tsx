@@ -37,6 +37,7 @@ interface Product {
   vendorId: string;
   vendorName?: string;
   category: string;
+  description?: string;
   isActive: boolean;
 }
 
@@ -85,6 +86,23 @@ const AdminDashboard: React.FC = () => {
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [userProducts, setUserProducts] = useState<Product[]>([]);
   const [userLoading, setUserLoading] = useState(false);
+  
+  // Product management state
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [showEditProductDialog, setShowEditProductDialog] = useState(false);
+  const [showDeleteProductDialog, setShowDeleteProductDialog] = useState(false);
+  const [showCreateProductDialog, setShowCreateProductDialog] = useState(false);
+  const [productForm, setProductForm] = useState({ 
+    name: "", 
+    price: "", 
+    stock: "", 
+    category: "", 
+    description: "",
+    isActive: true 
+  });
+  const [productFormLoading, setProductFormLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   // Fetch customers
@@ -340,6 +358,108 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Product management handlers
+  const handleEditProduct = (product: Product) => {
+    setEditProduct(product);
+    setProductForm({ 
+      name: product.name || "", 
+      price: (product.price || 0).toString(), 
+      stock: (product.stock || 0).toString(), 
+      category: product.category || "", 
+      description: product.description || "",
+      isActive: product.isActive !== undefined ? product.isActive : true 
+    });
+    setShowEditProductDialog(true);
+  };
+
+  const handleDeleteProduct = (product: Product) => {
+    setDeleteProduct(product);
+    setShowDeleteProductDialog(true);
+  };
+
+  const handleCreateProduct = () => {
+    setProductForm({ 
+      name: "", 
+      price: "", 
+      stock: "", 
+      category: "", 
+      description: "",
+      isActive: true 
+    });
+    setShowCreateProductDialog(true);
+  };
+
+  const submitEditProduct = async () => {
+    if (!editProduct) return;
+    setProductFormLoading(true);
+    try {
+      await axios.put(import.meta.env.VITE_API_URL + `/products/${editProduct._id}`, {
+        name: productForm.name,
+        price: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock),
+        category: productForm.category,
+        description: productForm.description,
+        isActive: productForm.isActive,
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      addToast({ title: "Product updated", variant: "success" });
+      setShowEditProductDialog(false);
+      fetchProducts();
+    } catch (err: any) {
+      addToast({ title: "Error updating product", description: err.response?.data?.message || err.message, variant: "error" });
+    } finally {
+      setProductFormLoading(false);
+    }
+  };
+
+  const submitDeleteProduct = async () => {
+    if (!deleteProduct) return;
+    setProductFormLoading(true);
+    try {
+      await axios.delete(import.meta.env.VITE_API_URL + `/products/${deleteProduct._id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      addToast({ title: "Product deleted", variant: "success" });
+      setShowDeleteProductDialog(false);
+      fetchProducts();
+    } catch (err: any) {
+      addToast({ title: "Error deleting product", description: err.response?.data?.message || err.message, variant: "error" });
+    } finally {
+      setProductFormLoading(false);
+    }
+  };
+
+  const submitCreateProduct = async () => {
+    setProductFormLoading(true);
+    try {
+      await axios.post(import.meta.env.VITE_API_URL + `/products`, {
+        name: productForm.name,
+        price: parseFloat(productForm.price),
+        stock: parseInt(productForm.stock),
+        category: productForm.category,
+        description: productForm.description,
+        isActive: productForm.isActive,
+        vendorId: localStorage.getItem("userId"), // This will be the admin's ID
+      }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      addToast({ title: "Product created", variant: "success" });
+      setShowCreateProductDialog(false);
+      fetchProducts();
+    } catch (err: any) {
+      addToast({ title: "Error creating product", description: err.response?.data?.message || err.message, variant: "error" });
+    } finally {
+      setProductFormLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header page="profile" />
@@ -561,6 +681,7 @@ const AdminDashboard: React.FC = () => {
                     onChange={e => setProductSearch(e.target.value)}
                     className="w-48"
                   />
+                  <Button onClick={handleCreateProduct}>Create Product</Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -574,6 +695,7 @@ const AdminDashboard: React.FC = () => {
                         <th className="border px-2 py-1">Stock</th>
                         <th className="border px-2 py-1">Vendor</th>
                         <th className="border px-2 py-1">Status</th>
+                        <th className="border px-2 py-1">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -587,6 +709,10 @@ const AdminDashboard: React.FC = () => {
                             <td className="border px-2 py-1">{product.stock}</td>
                             <td className="border px-2 py-1">{vendor?.vendorProfile?.storeName || vendor?.name || "Unknown Vendor"}</td>
                             <td className="border px-2 py-1">{product.isActive ? "Active" : "Inactive"}</td>
+                            <td className="border px-2 py-1 space-x-2">
+                              <Button size="sm" variant="outline" onClick={() => handleEditProduct(product)}>Edit</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteProduct(product)}>Delete</Button>
+                            </td>
                           </tr>
                         );
                       })}
@@ -661,6 +787,174 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
+        
+        {/* Edit Product Dialog */}
+        <Dialog open={showEditProductDialog} onOpenChange={setShowEditProductDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Product</DialogTitle>
+              <DialogDescription>Update product details.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); submitEditProduct(); }}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="product-name">Name</Label>
+                  <Input 
+                    id="product-name" 
+                    value={productForm.name} 
+                    onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="product-price">Price</Label>
+                  <Input 
+                    id="product-price" 
+                    type="number" 
+                    step="0.01" 
+                    value={productForm.price} 
+                    onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="product-stock">Stock</Label>
+                  <Input 
+                    id="product-stock" 
+                    type="number" 
+                    value={productForm.stock} 
+                    onChange={e => setProductForm(f => ({ ...f, stock: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="product-category">Category</Label>
+                  <Input 
+                    id="product-category" 
+                    value={productForm.category} 
+                    onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="product-description">Description</Label>
+                  <Input 
+                    id="product-description" 
+                    value={productForm.description} 
+                    onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} 
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="product-active"
+                    checked={productForm.isActive}
+                    onChange={e => setProductForm(f => ({ ...f, isActive: e.target.checked }))}
+                  />
+                  <Label htmlFor="product-active">Active</Label>
+                </div>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button type="submit" disabled={productFormLoading}>Save</Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancel</Button>
+                </DialogClose>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Product Dialog */}
+        <Dialog open={showDeleteProductDialog} onOpenChange={setShowDeleteProductDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Product</DialogTitle>
+              <DialogDescription>Are you sure you want to delete this product?</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4">
+              <Button variant="destructive" onClick={submitDeleteProduct} disabled={productFormLoading}>Delete</Button>
+              <DialogClose asChild>
+                <Button type="button" variant="outline">Cancel</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Product Dialog */}
+        <Dialog open={showCreateProductDialog} onOpenChange={setShowCreateProductDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Product</DialogTitle>
+              <DialogDescription>Fill in the details to create a new product.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); submitCreateProduct(); }}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="create-product-name">Name</Label>
+                  <Input 
+                    id="create-product-name" 
+                    value={productForm.name} 
+                    onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="create-product-price">Price</Label>
+                  <Input 
+                    id="create-product-price" 
+                    type="number" 
+                    step="0.01" 
+                    value={productForm.price} 
+                    onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="create-product-stock">Stock</Label>
+                  <Input 
+                    id="create-product-stock" 
+                    type="number" 
+                    value={productForm.stock} 
+                    onChange={e => setProductForm(f => ({ ...f, stock: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="create-product-category">Category</Label>
+                  <Input 
+                    id="create-product-category" 
+                    value={productForm.category} 
+                    onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))} 
+                    required 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="create-product-description">Description</Label>
+                  <Input 
+                    id="create-product-description" 
+                    value={productForm.description} 
+                    onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} 
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="create-product-active"
+                    checked={productForm.isActive}
+                    onChange={e => setProductForm(f => ({ ...f, isActive: e.target.checked }))}
+                  />
+                  <Label htmlFor="create-product-active">Active</Label>
+                </div>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button type="submit" disabled={productFormLoading}>Create</Button>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancel</Button>
+                </DialogClose>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
       <Footer />
       {/* User Detail Dialog */}
