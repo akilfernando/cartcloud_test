@@ -29,12 +29,12 @@ import {
 import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "@/context/authContext";
+import { useToast } from "@/components/ui/toast";
 
 export default function Signup() {
     const navigate = useNavigate();
-    const [error, setError] = useState<string | null>("");
-
     const { user, isLoading, signup } = useAuth();
+    const { addToast } = useToast();
 
     const validationSchema = Yup.object({
         name: Yup.string()
@@ -98,7 +98,11 @@ export default function Signup() {
         } 
         catch (error : any) {
             console.error("Signup failed:", error);
-            setError(error.message);
+            addToast({
+                title: "Signup Failed",
+                description: error.message || "Failed to create account",
+                variant: "error",
+            });
         }
 
     }
@@ -211,7 +215,6 @@ export default function Signup() {
                                 Create Account
                             </Button>
                         </div>
-                        <p className="text-red-500 text-xs">{error}</p>
                         <div className="flex items-center justify-center text-sm">
                             Already have an account?
                             <Button type="button" className="ps-1 text-blue-500" variant="link" onClick={() => navigate("/")}>

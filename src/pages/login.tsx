@@ -10,11 +10,12 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 import { useAuth } from "@/context/authContext";
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 
 export default function Login() {
     const navigate = useNavigate();
     const { user, isLoading, login } = useAuth();
-    const [error, setError] = useState<string | null>("");
+    const { addToast } = useToast();
     const role = user?.role || "customer";
 
     const validationSchema = Yup.object({
@@ -52,7 +53,11 @@ export default function Login() {
             navigate("/");
         } catch (error : any) {
             console.log(error.message);
-            setError(error.message);
+            addToast({
+                title: "Login Failed",
+                description: error.message || "Invalid email or password",
+                variant: "error",
+            });
         }
     }
 
@@ -120,7 +125,6 @@ export default function Login() {
                                 Sign In
                             </Button>
                         </div>
-                        <p className="text-red-500 text-xs">{error}</p>
                         <div className="flex items-center justify-center text-sm">
                             Don't have an account?
                             <Button type="button" className="ps-1 text-blue-500" variant="link" onClick={() => navigate("/signup")}>
