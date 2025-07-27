@@ -56,6 +56,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         className="w-full flex flex-col items-center flex-grow" // Ensure link takes available space
       >
         <img
+          loading='lazy' // Lazy load the image for performance
           src={product.imageUrl}
           alt={product.name}
           // Changed object-cover to object-contain to fit the image within the space
